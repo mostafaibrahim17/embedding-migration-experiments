@@ -1,4 +1,7 @@
-numpy>=1.26
-datasets>=2.18
-sentence-transformers>=2.6
-hnswlib>=0.8
+# Versions this repo was last run and verified with (Python 3.14.4, macOS, CPU).
+# hnswlib has no wheels; installing it needs a C++ toolchain.
+numpy==2.5.4
+datasets==5.1.0
+sentence-transformers==6.1.0
+hnswlib==0.8.0
+torch==2.14.1

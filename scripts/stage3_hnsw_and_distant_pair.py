@@ -1,24 +1,27 @@
-"""
-embedding_migration_stage3.py
+"""Stage 3: the main SciFact run.
 
-Stage-3 reruns behind "Never serve a half-migrated vector index".
-Extends embedding_migration_experiment.ipynb with the three things the audit asked for:
+Extends the first exploratory run with the three things it was missing:
 
   RUN 1  HNSW instead of exact search. Two build protocols:
-           A  in-place update: graph built on OLD vectors, migrated docs re-added
-              under the same label (models a partial-update migration).
+           A  in-place update: graph built on OLD vectors, migrated documents
+              re-added under the same label (models a partial-update migration).
            B  rebuild on the mix: fresh graph over the mixed vectors at each step
-              (models a full reindex over a half-migrated dataset).
+              (models a full reindex over a half-migrated index).
          For each: raw recall@10, per-space normalized recall computed only over
-         the candidates the graph actually returned, and REACHABILITY (share of a
-         query's relevant old-space docs that appear anywhere in the candidate set).
-  RUN 2  A distant model pair (all-MiniLM-L6-v2 -> bge-small-en-v1.5), exact search.
-         Neighbor overlap + the migration curve, 5 seeds.
-  RUN 3  Boundary measurement: at each fraction, share of top-10 slots taken by
-         migrated docs vs. their share of the index (exact search, MiniLM pair).
+         the candidates the graph actually returned, and reachability (share of a
+         query's relevant old-space documents that appear anywhere in the
+         candidate set).
+  RUN 2  A distant model pair (all-MiniLM-L6-v2 -> bge-small-en-v1.5), exact
+         search. Neighbour overlap and the migration curve, five seeds.
+  RUN 3  At each fraction, the share of top-10 slots taken by migrated documents
+         against their share of the index (exact search, MiniLM pair).
 
-Same corpus (BeIR/scifact), same models, same seeds (0-4), same 11 fractions as
-the original notebook. Reports whatever comes out, including nulls.
+BeIR/scifact, seeds 0-4, eleven fractions from 0% to 100%. Writes whatever comes
+out, including nulls.
+
+Recall@10 here is pooled across queries: total relevant documents retrieved in
+the top 10 divided by total relevant documents, not the per-query mean. Every
+script in this repo uses the same definition.
 """
 
 import json, os, sys, time
@@ -33,7 +36,7 @@ NEW_MODEL     = "sentence-transformers/paraphrase-MiniLM-L6-v2"
 DISTANT_MODEL = "BAAI/bge-small-en-v1.5"          # 384-d, different training objective
 K = 10
 SEEDS = [0, 1, 2, 3, 4]
-FRACTIONS = np.linspace(0, 1, 11)
+FRACTIONS = np.round(np.linspace(0, 1, 11), 1)
 CACHE = os.environ.get("EMB_CACHE", ".")
 OUT = "stage3_results.json"
 

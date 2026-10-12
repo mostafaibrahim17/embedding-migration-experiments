@@ -6,10 +6,10 @@ import numpy as np
 from datasets import load_dataset
 import hnswlib
 
-CACHE = os.path.dirname(os.path.abspath(__file__))
+CACHE = os.environ.get("EMB_CACHE", os.path.dirname(os.path.abspath(__file__)))
 K = 10; SEEDS = [0, 1, 2, 3, 4]; FRACTIONS = [0.0, 0.1, 0.2, 0.3]
 EFS = [50, 200]
-OUT = "/Users/ahmedfaramawy/Desktop/Agolia/stage7_ef_results.json"
+OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "stage7_ef_results.json")
 
 corpus  = load_dataset("BeIR/scifact", "corpus")["corpus"]
 queries = load_dataset("BeIR/scifact", "queries")["queries"]
@@ -23,6 +23,10 @@ doc_ids = list(doc_text.keys()); doc_index = {d: i for i, d in enumerate(doc_ids
 q_ids = [q for q in relevant if q in query_text and any(d in doc_index for d in relevant[q])]
 N = len(doc_ids)
 rel_rows = [np.array([doc_index[d] for d in relevant[q] if d in doc_index]) for q in q_ids]
+for _f in ("emb_docs_old.npy", "emb_docs_new.npy", "emb_q_new.npy"):
+    if not os.path.exists(os.path.join(CACHE, _f)):
+        raise SystemExit(f"missing {_f} in {CACHE}. Run stage3_hnsw_and_distant_pair.py first "
+                         f"(same EMB_CACHE) to build the cached embeddings.")
 docs_old = np.load(f"{CACHE}/emb_docs_old.npy"); docs_new = np.load(f"{CACHE}/emb_docs_new.npy")
 q_new = np.load(f"{CACHE}/emb_q_new.npy")
 assert docs_old.shape[0] == N and q_new.shape[0] == len(q_ids)
