@@ -1,0 +1,4 @@
+emb_*.npy
+venv/
+__pycache__/
+.DS_Store

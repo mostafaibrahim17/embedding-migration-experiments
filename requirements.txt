@@ -1,0 +1,4 @@
+numpy>=1.26
+datasets>=2.18
+sentence-transformers>=2.6
+hnswlib>=0.8
