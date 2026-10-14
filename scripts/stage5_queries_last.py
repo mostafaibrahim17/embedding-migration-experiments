@@ -1,19 +1,17 @@
-"""
-embedding_migration_stage5.py
-Queries-LAST migration order. Documents migrate old -> new in place while queries
+"""Queries-LAST migration order. Documents migrate old -> new in place while queries
 stay on the OLD model; queries switch only at the end. Same corpus, seeds, fractions
 as stage 3. Reuses cached document embeddings; embeds the 300 queries with the old model.
 Runs exact search for both pairs, and HNSW (in-place update, same M/ef as stage 3) for
 the MiniLM pair.
 """
-import json, os, time
+import json, os
 from collections import defaultdict
 import numpy as np
 from datasets import load_dataset
 from sentence_transformers import SentenceTransformer
 import hnswlib
 OLD_MODEL="sentence-transformers/all-MiniLM-L6-v2"
-K=10; SEEDS=[0,1,2,3,4]; FR=np.linspace(0,1,11); CACHE=os.environ.get("EMB_CACHE",".")
+K=10; SEEDS=[0,1,2,3,4]; FR=np.linspace(0,1,11); CACHE=os.environ.get("EMB_CACHE",os.path.dirname(os.path.abspath(__file__))); OUT=os.path.join(os.path.dirname(os.path.abspath(__file__)),"stage5_results.json")
 def log(*a): print(*a, flush=True)
 corpus=load_dataset("BeIR/scifact","corpus")["corpus"]; queries=load_dataset("BeIR/scifact","queries")["queries"]
 qrels=load_dataset("BeIR/scifact-qrels")["test"]
@@ -24,7 +22,12 @@ for r in qrels:
 doc_ids=list(doc_text.keys()); doc_index={d:i for i,d in enumerate(doc_ids)}
 q_ids=[q for q in relevant if q in query_text and any(d in doc_index for d in relevant[q])]; N=len(doc_ids)
 qtexts=[query_text[q] for q in q_ids]
-def load(tag): return np.load(os.path.join(CACHE,f"emb_{tag}.npy"))
+def load(tag):
+    p=os.path.join(CACHE,f"emb_{tag}.npy")
+    if not os.path.exists(p):
+        raise SystemExit(f"missing emb_{tag}.npy in {CACHE}. Run stage3_hnsw_and_distant_pair.py first "
+                         f"(same EMB_CACHE) to build the cached embeddings.")
+    return np.load(p)
 docs_old=load("docs_old"); docs_new=load("docs_new"); docs_far=load("docs_far")
 p=os.path.join(CACHE,"emb_q_old.npy")
 if os.path.exists(p): q_old=np.load(p)
@@ -60,4 +63,4 @@ for seed in SEEDS:
         lab,_=idx.knn_query(q_old,k=K); c.append(recall(lab))
     curves.append(c); log(f"  hnsw seed {seed}: min {min(c):.3f} @ {FR[int(np.argmin(c))]:.1f}")
 res["minilm_pair_hnsw_inplace"]=curves; m=np.mean(curves,axis=0); log("  hnsw mean "+" ".join(f"{v:.2f}" for v in m))
-json.dump(res,open("stage5_results.json","w"),indent=1); log("saved stage5_results.json")
+json.dump(res,open(OUT,"w"),indent=1); log(f"saved {OUT}")

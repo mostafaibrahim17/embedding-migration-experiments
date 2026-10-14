@@ -69,7 +69,6 @@ def hnsw_eval(idx, mask, ef):
 
 res = {"exact_new_vs_new": exact_recall(q_new, docs_new), "exact_new_vs_old": exact_recall(q_new, docs_old),
        "fractions": FRACTIONS, "seeds": SEEDS, "runs": {}}
-# exact normalized at these fractions for reference
 t0 = time.time()
 for ef in EFS:
     for proto in ("A_inplace_update", "B_rebuild_on_mix"):

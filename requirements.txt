@@ -4,4 +4,5 @@ numpy==2.5.4
 datasets==5.1.0
 sentence-transformers==6.1.0
 hnswlib==0.8.0
+# torch is pulled in by sentence-transformers; no script imports it directly.
 torch==2.14.1

@@ -6,7 +6,7 @@ from datasets import load_dataset
 from sentence_transformers import SentenceTransformer
 import hnswlib
 DS="fiqa"; OLD="sentence-transformers/all-MiniLM-L6-v2"; NEW="sentence-transformers/paraphrase-MiniLM-L6-v2"; FAR="BAAI/bge-small-en-v1.5"
-K=10; SEEDS=[0,1,2,3,4]; FR=np.linspace(0,1,11); CACHE=os.environ.get("EMB_CACHE",".")
+K=10; SEEDS=[0,1,2,3,4]; FR=np.linspace(0,1,11); CACHE=os.environ.get("EMB_CACHE",os.path.dirname(os.path.abspath(__file__))); OUT=os.path.join(os.path.dirname(os.path.abspath(__file__)),"fiqa_results.json")
 def log(*a): print(*a, flush=True)
 t0=time.time()
 corpus=load_dataset(f"BeIR/{DS}","corpus")["corpus"]; queries=load_dataset(f"BeIR/{DS}","queries")["queries"]; qrels=load_dataset(f"BeIR/{DS}-qrels")["test"]
@@ -107,4 +107,4 @@ for name,tgt in [("minilm",docs_new),("distant",docs_far)]:
             n=int(f*N); mixed=docs_old.copy(); mixed[order[:n]]=tgt[order[:n]]; r.append(exact(q_old,mixed))
         C.append(r); log(f"  qlast {name} seed {seed}: trough {min(r):.3f} @ {FR[int(np.argmin(r))]:.1f}")
     R[f"qlast_{name}"]=C; log(f"  qlast {name} mean: "+" ".join(f"{v:.2f}" for v in np.mean(C,axis=0)))
-json.dump(R,open("fiqa_results.json","w"),indent=1); log(f"saved fiqa_results.json ({time.time()-t0:.0f}s)")
+json.dump(R,open(OUT,"w"),indent=1); log(f"saved {OUT} ({time.time()-t0:.0f}s)")

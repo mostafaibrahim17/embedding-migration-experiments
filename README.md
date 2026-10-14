@@ -42,7 +42,7 @@ Two further results:
 ## Layout
 
 ```
-scripts/     the four runs
+scripts/     the five runs
 results/     raw JSON written by each run
 ```
 
@@ -66,21 +66,27 @@ toolchain. On a bare container, install build tools first.
 
 ## Running
 
-Run stage 3 first. It embeds the documents and caches them as `emb_*.npy`; stages 2,
-5 and 7 reuse that cache and will stop with a clear message if it is missing. Set
-`EMB_CACHE=/some/path` to keep the cache somewhere other than next to the scripts.
+Run stage 3 first. It embeds the documents and caches them as `emb_*.npy` next to the
+scripts. Stages 5 and 7 need that cache and stop with a clear message if it is missing;
+stage 2 re-embeds on its own if it has to, which costs a few minutes. Set
+`EMB_CACHE=/some/path` to keep the cache elsewhere.
 
 ```bash
-cd scripts
-python stage3_hnsw_and_distant_pair.py   # first run embeds 5,183 docs x3; ~10 min CPU
-python stage2_cosine_separation.py       # ~1 min once cached
-python stage5_queries_last.py            # ~2 min once cached
-python stage7_ef_search.py               # ~2 min once cached
-python stage6_fiqa.py                    # 57,638 docs x3 models, 30-90 min CPU
+python scripts/stage3_hnsw_and_distant_pair.py   # first run embeds 5,183 docs x3; ~10 min
+python scripts/stage2_cosine_separation.py       # ~1 min once cached
+python scripts/stage5_queries_last.py            # ~2 min once cached
+python scripts/stage7_ef_search.py               # ~2 min once cached
+python scripts/stage6_fiqa.py                    # 57,638 docs x3 models, 30-90 min
 ```
 
-Each script writes its JSON next to itself in `scripts/`. The copies in `results/`
-are the runs the article quotes.
+Paths are relative to each script, not to your shell, so it does not matter which
+directory you run from. Every script writes its JSON into `scripts/`. The copies in
+`results/` are the runs the article quotes, timed on an Apple M3 Pro, 11 cores, CPU
+only; stage 6 pins hnswlib to 8 insert threads.
+
+Stages 1 and 4 are not in the repo. Stage 1 was an exploratory first pass that stage 3
+supersedes, and stage 4 was the linear map between the two spaces, dropped because it
+was scored on the documents it was fitted on (see Caveats).
 
 ## Setup used
 
@@ -98,11 +104,18 @@ are the runs the article quotes.
   with several relevant documents weigh more. Published BeIR numbers use the per-query
   mean, so do not compare these figures to a leaderboard directly.
 - Cosine similarity throughout, vectors L2-normalized
+- **Per-space normalization:** a per-query z-score. Within each space, subtract that
+  space's mean similarity for the query and divide by its standard deviation, then take
+  the top 10 over the combined scores. Exact search normalizes over all documents; a
+  graph run can only normalize the candidates it returned, which is why it recovers less.
 - **Graph:** [hnswlib](https://github.com/nmslib/hnswlib), M 16, ef_construction 200,
   ef_search 50 (and 200 in stage 7), tuned so the fully migrated graph matched exact
   recall within 2%. The candidate set a graph run scores is the `k = ef_search`
   neighbours it returns, so "reach" is relative to that width.
-- **Seeds:** five migration orders, 0 through 4, eleven fractions from 0% to 100%
+- **Seeds:** five migration orders, 0 through 4, eleven fractions from 0% to 100%.
+  hnswlib is built with `random_seed=100`, and the FiQA neighbour-overlap sample uses
+  `default_rng(0)`. Parallel inserts still make the graph runs non-deterministic; the
+  size of that is in Caveats.
 
 ## Reading the results
 
@@ -124,6 +137,16 @@ of them.
 with `qfirst_*` and `qlast_*` sections. Reach at 100% migrated is `null`, since no
 old-space documents remain to reach.
 
+Where the rest of the article's figures live:
+
+- the 0.78 starting point, old queries against old documents:
+  `stage5_results.json` → `baselines.oldq_vs_olddocs`
+- the queries-last curves: `stage5_results.json` → `minilm_pair_exact`,
+  `distant_pair_exact`, `minilm_pair_hnsw_inplace`
+- the wider graph search: `stage7_ef_results.json` → `runs.ef50_*` and `runs.ef200_*`,
+  each `A_inplace_update` and `B_rebuild_on_mix`, fractions 0% to 30% only
+- the cosine separation and top-10 share: `stage2_cosine_results.json`
+
 ## Caveats
 
 - On these benchmarks the model standing in for the "new" one is the weaker retriever.
@@ -140,7 +163,14 @@ old-space documents remain to reach.
   rescoring pass, and it assumes you know which space each document is in.
 - hnswlib inserts in parallel, so graph results are not bit-reproducible. Comparing the
   ef 50 runs in `stage3_results.json` and `stage7_ef_results.json`, which run identical
-  code on identical embeddings, the per-seed figures differ by up to about 0.003.
+  code on identical embeddings, per-seed recall differs by up to 0.006 and reach by up
+  to 0.016. One SciFact document is 1/339 = 0.003 of pooled recall, so that is a run-to-run
+  gap of two documents.
+- `ef_search` was picked on the evaluation queries themselves: the scripts take the
+  first width whose fully migrated graph reaches 98% of exact recall on the same 300
+  SciFact or 648 FiQA queries the results are scored on. That tunes the graph in the
+  index's favour, which only makes the low point harder to explain away, but it is not
+  a held-out choice.
 - A linear map between the two spaces was tried and is not reported, because it was
   scored on the same documents it was fitted on.
 - Neighbour overlap in `stage6_fiqa.py` is computed on a 3,000-document sample, not the

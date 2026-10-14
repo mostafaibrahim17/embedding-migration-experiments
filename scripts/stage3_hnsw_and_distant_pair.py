@@ -1,8 +1,12 @@
 """Stage 3: the main SciFact run.
 
-Extends the first exploratory run with the three things it was missing:
+Extends an earlier exploratory run (not included, see README) with the three
+things it was missing. Numbered in the order the script runs them:
 
-  RUN 1  HNSW instead of exact search. Two build protocols:
+  RUN 1  The exact-search migration curves for the MiniLM pair: raw recall@10,
+         per-space normalized recall, and at each fraction the share of top-10
+         slots taken by migrated documents against their share of the index.
+  RUN 2  HNSW instead of exact search. Two build protocols:
            A  in-place update: graph built on OLD vectors, migrated documents
               re-added under the same label (models a partial-update migration).
            B  rebuild on the mix: fresh graph over the mixed vectors at each step
@@ -11,10 +15,13 @@ Extends the first exploratory run with the three things it was missing:
          the candidates the graph actually returned, and reachability (share of a
          query's relevant old-space documents that appear anywhere in the
          candidate set).
-  RUN 2  A distant model pair (all-MiniLM-L6-v2 -> bge-small-en-v1.5), exact
+  RUN 3  A distant model pair (all-MiniLM-L6-v2 -> bge-small-en-v1.5), exact
          search. Neighbour overlap and the migration curve, five seeds.
-  RUN 3  At each fraction, the share of top-10 slots taken by migrated documents
-         against their share of the index (exact search, MiniLM pair).
+
+Per-space normalization here is a per-query z-score: within each space, subtract
+that space's mean similarity for the query and divide by its standard deviation,
+then take the top 10 over the combined scores. Exact search normalizes over all
+documents; a graph run can only normalize the candidates it returned.
 
 BeIR/scifact, seeds 0-4, eleven fractions from 0% to 100%. Writes whatever comes
 out, including nulls.
@@ -24,7 +31,7 @@ the top 10 divided by total relevant documents, not the per-query mean. Every
 script in this repo uses the same definition.
 """
 
-import json, os, sys, time
+import json, os, time
 from collections import defaultdict
 import numpy as np
 from datasets import load_dataset
@@ -37,8 +44,8 @@ DISTANT_MODEL = "BAAI/bge-small-en-v1.5"          # 384-d, different training ob
 K = 10
 SEEDS = [0, 1, 2, 3, 4]
 FRACTIONS = np.round(np.linspace(0, 1, 11), 1)
-CACHE = os.environ.get("EMB_CACHE", ".")
-OUT = "stage3_results.json"
+CACHE = os.environ.get("EMB_CACHE", os.path.dirname(os.path.abspath(__file__)))
+OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "stage3_results.json")
 
 def log(*a):
     print(*a, flush=True)
@@ -137,8 +144,8 @@ results["exact"] = {"new_vs_new": base_new, "new_vs_old": crossed,
 log(f"\n=== exact baseline: new/new {base_new:.3f}  new/old {crossed:.3f}  "
     f"overlap {results['exact']['overlap_minilm_pair']:.2f}")
 
-# ------------------------------------------------------------------ RUN 3 + exact curves (MiniLM)
-log("\n=== RUN 3 / exact curves (MiniLM pair): raw, normalized, boundary share")
+# ------------------------------------------------------------------ RUN 1: exact curves (MiniLM)
+log("\n=== RUN 1: exact curves (MiniLM pair): raw, normalized, top-10 share")
 exact_curves = {"raw": [], "norm": [], "top10_migrated_share": []}
 for seed in SEEDS:
     order = np.random.default_rng(seed).permutation(N)
@@ -161,8 +168,8 @@ log("  frac   raw    norm   top10-share-migrated  corpus-share")
 for f, r, nm, sh in zip(FRACTIONS, mean_raw, np.mean(exact_curves["norm"], axis=0), mean_share):
     log(f"  {f:.1f}   {r:.3f}  {nm:.3f}     {sh:.2f}                 {f:.2f}")
 
-# ------------------------------------------------------------------ RUN 1: HNSW
-log("\n=== RUN 1: HNSW")
+# ------------------------------------------------------------------ RUN 2: HNSW
+log("\n=== RUN 2: HNSW")
 M, EFC = 16, 200
 
 def build(vecs, ef):
@@ -240,8 +247,8 @@ for proto in ("A_inplace_update", "B_rebuild_on_mix"):
     for f, r, nm, re_ in zip(FRACTIONS, mr, mn, mre):
         log(f"    {f:.1f}   {r:.3f}  {nm:.3f}  {re_:.2f}")
 
-# ------------------------------------------------------------------ RUN 2: distant pair
-log("\n=== RUN 2: distant pair  all-MiniLM-L6-v2 -> bge-small-en-v1.5 (exact)")
+# ------------------------------------------------------------------ RUN 3: distant pair
+log("\n=== RUN 3: distant pair  all-MiniLM-L6-v2 -> bge-small-en-v1.5 (exact)")
 far_base = exact_recall(q_far, docs_far)
 far_cross = exact_recall(q_far, docs_old)
 far_ov = overlap(docs_old, docs_far)
