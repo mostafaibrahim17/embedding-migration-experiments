@@ -1,0 +1,151 @@
+{
+ "step": "5b",
+ "n_docs": 5183,
+ "endpoint": "http://127.0.0.1:8090",
+ "what": "cost of each write shape, one batch of all documents each",
+ "metric_names": [
+  "content.proton.documentdb.ready.document_store.cache.lookups.rate",
+  "content.proton.documentdb.ready.document_store.cache.hit_rate.average",
+  "content.proton.documentdb.ready.document_store.disk_usage.average",
+  "content.proton.documentdb.ready.document_store.memory_usage.allocated_bytes.average",
+  "content.proton.documentdb.ready.attribute.memory_usage.allocated_bytes.average",
+  "content.proton.documentdb.ready.lid_space.lid_limit.last"
+ ],
+ "runs": [
+  {
+   "shape": "put_full",
+   "ops": 5183,
+   "jsonl_bytes": 52130677,
+   "wall_seconds": 4.54,
+   "docs_per_second": 1141.5,
+   "request_mbps": 5.443,
+   "latency_avg_ms": 24,
+   "latency_max_ms": 85,
+   "errors": 0,
+   "metrics_before": {
+    "content.proton.documentdb.ready.attribute.memory_usage.allocated_bytes.average": 9425720,
+    "content.proton.documentdb.ready.lid_space.lid_limit.last": 5184,
+    "content.proton.documentdb.ready.document_store.disk_usage.average": 42550910,
+    "content.proton.documentdb.ready.document_store.memory_usage.allocated_bytes.average": 42834996,
+    "content.proton.documentdb.ready.document_store.cache.hit_rate.average": 0,
+    "content.proton.documentdb.ready.document_store.cache.lookups.rate": 0
+   },
+   "metrics_after": {
+    "content.proton.documentdb.ready.attribute.memory_usage.allocated_bytes.average": 9425720,
+    "content.proton.documentdb.ready.lid_space.lid_limit.last": 5184,
+    "content.proton.documentdb.ready.document_store.disk_usage.average": 42550910,
+    "content.proton.documentdb.ready.document_store.memory_usage.allocated_bytes.average": 42834996,
+    "content.proton.documentdb.ready.document_store.cache.hit_rate.average": 0,
+    "content.proton.documentdb.ready.document_store.cache.lookups.rate": 0
+   }
+  },
+  {
+   "shape": "update_tensor",
+   "ops": 5183,
+   "jsonl_bytes": 44261681,
+   "wall_seconds": 5.71,
+   "docs_per_second": 907.7,
+   "request_mbps": 3.382,
+   "latency_avg_ms": 45,
+   "latency_max_ms": 92,
+   "errors": 0,
+   "metrics_before": {
+    "content.proton.documentdb.ready.attribute.memory_usage.allocated_bytes.average": 9425720,
+    "content.proton.documentdb.ready.lid_space.lid_limit.last": 5184,
+    "content.proton.documentdb.ready.document_store.disk_usage.average": 42550910,
+    "content.proton.documentdb.ready.document_store.memory_usage.allocated_bytes.average": 42834996,
+    "content.proton.documentdb.ready.document_store.cache.hit_rate.average": 0,
+    "content.proton.documentdb.ready.document_store.cache.lookups.rate": 0
+   },
+   "metrics_after": {
+    "content.proton.documentdb.ready.attribute.memory_usage.allocated_bytes.average": 9425720,
+    "content.proton.documentdb.ready.lid_space.lid_limit.last": 5184,
+    "content.proton.documentdb.ready.document_store.disk_usage.average": 42550910,
+    "content.proton.documentdb.ready.document_store.memory_usage.allocated_bytes.average": 42834996,
+    "content.proton.documentdb.ready.document_store.cache.hit_rate.average": 0,
+    "content.proton.documentdb.ready.document_store.cache.lookups.rate": 0
+   }
+  },
+  {
+   "shape": "update_int",
+   "ops": 5183,
+   "jsonl_bytes": 407569,
+   "wall_seconds": 6.08,
+   "docs_per_second": 852.0,
+   "request_mbps": 0.03,
+   "latency_avg_ms": 46,
+   "latency_max_ms": 100,
+   "errors": 0,
+   "metrics_before": {
+    "content.proton.documentdb.ready.attribute.memory_usage.allocated_bytes.average": 9425720,
+    "content.proton.documentdb.ready.lid_space.lid_limit.last": 5184,
+    "content.proton.documentdb.ready.document_store.disk_usage.average": 42550910,
+    "content.proton.documentdb.ready.document_store.memory_usage.allocated_bytes.average": 42834996,
+    "content.proton.documentdb.ready.document_store.cache.hit_rate.average": 0,
+    "content.proton.documentdb.ready.document_store.cache.lookups.rate": 0
+   },
+   "metrics_after": {
+    "content.proton.documentdb.ready.attribute.memory_usage.allocated_bytes.average": 9425720,
+    "content.proton.documentdb.ready.lid_space.lid_limit.last": 5184,
+    "content.proton.documentdb.ready.document_store.disk_usage.average": 42550910,
+    "content.proton.documentdb.ready.document_store.memory_usage.allocated_bytes.average": 42834996,
+    "content.proton.documentdb.ready.document_store.cache.hit_rate.average": 0,
+    "content.proton.documentdb.ready.document_store.cache.lookups.rate": 0
+   }
+  },
+  {
+   "shape": "update_text",
+   "ops": 5183,
+   "jsonl_bytes": 8205025,
+   "wall_seconds": 4.64,
+   "docs_per_second": 1117.8,
+   "request_mbps": 0.856,
+   "latency_avg_ms": 38,
+   "latency_max_ms": 93,
+   "errors": 0,
+   "metrics_before": {
+    "content.proton.documentdb.ready.attribute.memory_usage.allocated_bytes.average": 9425720,
+    "content.proton.documentdb.ready.lid_space.lid_limit.last": 5184,
+    "content.proton.documentdb.ready.document_store.disk_usage.average": 42550910,
+    "content.proton.documentdb.ready.document_store.memory_usage.allocated_bytes.average": 42834996,
+    "content.proton.documentdb.ready.document_store.cache.hit_rate.average": 0,
+    "content.proton.documentdb.ready.document_store.cache.lookups.rate": 0
+   },
+   "metrics_after": {
+    "content.proton.documentdb.ready.attribute.memory_usage.allocated_bytes.average": 9425720,
+    "content.proton.documentdb.ready.lid_space.lid_limit.last": 5184,
+    "content.proton.documentdb.ready.document_store.disk_usage.average": 49625543.66666666,
+    "content.proton.documentdb.ready.document_store.memory_usage.allocated_bytes.average": 49941512.66666666,
+    "content.proton.documentdb.ready.document_store.cache.hit_rate.average": 0,
+    "content.proton.documentdb.ready.document_store.cache.lookups.rate": 9.3
+   }
+  },
+  {
+   "shape": "update_tensor_2",
+   "ops": 5183,
+   "jsonl_bytes": 44261681,
+   "wall_seconds": 5.16,
+   "docs_per_second": 1005.1,
+   "request_mbps": 3.751,
+   "latency_avg_ms": 46,
+   "latency_max_ms": 105,
+   "errors": 0,
+   "metrics_before": {
+    "content.proton.documentdb.ready.attribute.memory_usage.allocated_bytes.average": 9425720,
+    "content.proton.documentdb.ready.lid_space.lid_limit.last": 5184,
+    "content.proton.documentdb.ready.document_store.disk_usage.average": 49625543.66666666,
+    "content.proton.documentdb.ready.document_store.memory_usage.allocated_bytes.average": 49941512.66666666,
+    "content.proton.documentdb.ready.document_store.cache.hit_rate.average": 0,
+    "content.proton.documentdb.ready.document_store.cache.lookups.rate": 9.3
+   },
+   "metrics_after": {
+    "content.proton.documentdb.ready.attribute.memory_usage.allocated_bytes.average": 9425720,
+    "content.proton.documentdb.ready.lid_space.lid_limit.last": 5184,
+    "content.proton.documentdb.ready.document_store.disk_usage.average": 49625543.66666666,
+    "content.proton.documentdb.ready.document_store.memory_usage.allocated_bytes.average": 49941512.66666666,
+    "content.proton.documentdb.ready.document_store.cache.hit_rate.average": 0,
+    "content.proton.documentdb.ready.document_store.cache.lookups.rate": 9.3
+   }
+  }
+ ]
+}

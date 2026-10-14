@@ -5,8 +5,9 @@ This directory does it in a real engine: one index carrying two embedding fields
 a backfill that fills the second one a slice at a time, a coordinated switch of
 query model and target field, and a rollback.
 
-Status: the index is loaded and the pre-migration baseline reproduces the numpy
-one exactly. The backfill, switch and rollback runs are not written yet.
+Status: the index is loaded, the baseline reproduces the numpy one exactly, and
+the backfill reproduces the article's low point at every migration fraction. The
+coordinated switch and the rollback are not written yet.
 
 ## What the schema does
 
@@ -101,6 +102,77 @@ Exploring about 50 candidates lands within 0.4% of exact, which is the same
 relationship `../scripts/stage3_hnsw_and_distant_pair.py` reports for ef_search
 50. The two graph configurations are comparable.
 
+**Steps 5 and 6, the backfill and the mixed state.** `emb_new` filled in
+increments of 10% through partial updates, following the same migration order
+stage 3 uses for seed 0, with the 300 new-model queries asked against the mixed
+index after each increment. `results/step5_backfill.json`:
+
+| Migrated | Vespa exact | stage 3 seed 0 | Vespa graph | p50 latency |
+|---|---|---|---|---|
+| 0% | 0.5900 | 0.5900 | 0.5900 | 2.3 ms |
+| 10% | 0.3658 | 0.3658 | 0.3658 | 2.5 ms |
+| 20% | **0.3156** | **0.3156** | **0.3156** | 2.3 ms |
+| 30% | 0.3481 | 0.3481 | 0.3481 | 2.4 ms |
+| 40% | 0.3658 | 0.3658 | 0.3658 | 2.5 ms |
+| 50% | 0.4100 | 0.4100 | 0.4100 | 2.6 ms |
+| 60% | 0.4631 | 0.4631 | 0.4572 | 2.5 ms |
+| 70% | 0.5133 | 0.5133 | 0.5074 | 2.5 ms |
+| 80% | 0.5575 | 0.5575 | 0.5575 | 2.3 ms |
+| 90% | 0.5959 | 0.5959 | 0.5959 | 2.2 ms |
+| 100% | 0.6460 | 0.6460 | 0.6490 | 2.5 ms |
+
+Every fraction agrees with the simulation to four decimals. Recall bottoms out at
+0.3156 with a fifth of the documents moved, against 0.5900 before the backfill
+started and 0.6460 when it finished: below both ends, in a real engine, on the
+same data.
+
+Nothing looked wrong from the outside while this happened. No query returned an
+error, none returned zero hits, and p50 latency stayed between 2.2 and 2.6 ms at
+every fraction, including the worst one. A mixed index serves fast and answers
+everything. It just answers worse.
+
+**Step 5b, what the backfill costs.** Five write shapes, each one batch of all
+5,183 documents through the same feed client. `results/step5b_update_cost.json`:
+
+| Write shape | Throughput | Payload | Document store reads | Document store on disk |
+|---|---|---|---|---|
+| full document PUT | 1142/s | 52.1 MB | 0.00 | 42.6 → 42.6 MB |
+| assign `emb_new` + `space` | 908/s | 44.3 MB | 0.00 | 42.6 → 42.6 MB |
+| assign `space` only | 852/s | 0.4 MB | 0.00 | 42.6 → 42.6 MB |
+| assign `text`, same value | 1118/s | 8.2 MB | 9.30 | 42.6 → **49.6 MB** |
+| assign `emb_new` again | 1005/s | 44.3 MB | 0.00 | 49.6 → 49.6 MB |
+
+**Updating an HNSW-indexed tensor attribute does not touch the document store.**
+No reads, no growth, whether the vector is being inserted into the second graph
+for the first time or replaced. Updating the indexed `text` field to the value it
+already held does both: it reads the document and rewrites the store, which grows
+by roughly the payload. That is the distinction Vespa's documentation draws
+between attribute and index fields, and the answer to the question it leaves
+open, which is that the HNSW index on a tensor attribute does not drag it onto
+the expensive path. The article's claim holds.
+
+Throughput is the wrong place to look for it. Everything sits between 850 and
+1,140 documents per second, and a 0.4 MB update of a single integer is the
+slowest of the five, so on one node at this size the feed rate is bound by
+per-operation overhead rather than by what the write touches. The saving is in
+storage and I/O, not in documents per second. A practitioner expecting attribute
+updates to feed visibly faster will not see it here.
+
+**Step 5c, the bill for the second vector.** `results/step5c_field_memory.json`:
+
+| Field | Memory used | Allocated |
+|---|---|---|
+| `emb_old` | 8.78 MB | 9.43 MB |
+| `emb_new` | 8.80 MB | 9.47 MB |
+| `space` | 0.17 MB | 0.36 MB |
+| `doc_id` | 0.19 MB | 0.26 MB |
+
+5,183 vectors of 384 float32 values are 7.96 MB of raw numbers, so each field
+costs about 0.8 MB over its vectors for the graph and the attribute structures.
+Carrying both spaces doubles vector memory for the length of the migration and
+leaves the document payload alone, which is the trade the article describes,
+priced.
+
 ### One thing worth knowing before tuning an ANN query
 
 `hnsw.exploreAdditionalHits` only works as a YQL annotation on the operator:
@@ -134,11 +206,20 @@ too, at the cost of a larger result set to rank.
 ## Running the migration
 
 ```bash
-python3 scripts/prepare_embeddings.py                    # embeds once, ~1 min, shares ../scripts cache
-python3 scripts/feed_old_space.py                        # step 3, the pre-migration index
-python3 scripts/eval_recall.py --profile old --exact      # step 4, expect 0.7817
-python3 scripts/eval_recall.py --profile old --explore 40 # the graph at ~ef 50
+python3 scripts/prepare_embeddings.py                     # embeds once, ~1 min, shares ../scripts cache
+python3 scripts/feed_old_space.py                         # step 3, the pre-migration index
+python3 scripts/eval_recall.py --profile old --exact       # step 4, expect 0.7817
+python3 scripts/eval_recall.py --profile old --explore 40  # the graph at ~ef 50
+python3 scripts/backfill_and_measure.py                   # steps 5 and 6, the whole curve
+python3 scripts/update_cost.py                            # step 5b, what each write shape costs
+python3 scripts/field_memory.py                           # step 5c, per-field memory
 ```
+
+`backfill_and_measure.py` expects the index in the state `feed_old_space.py`
+leaves it in, so re-run that first to start over. `SEED` picks the migration
+order and defaults to 0, matching stage 3's first seed. `update_cost.py` rewrites
+every document several times and leaves the index fully migrated, so run it after
+the backfill, not before.
 
 `prepare_embeddings.py` writes the four embedding arrays into `../scripts/` under
 the names stage 3 uses, so the two halves of the repo share one cache and one
@@ -147,13 +228,16 @@ the datasets library.
 
 ## What is not verified
 
-- **Whether a partial update to an HNSW-indexed tensor attribute avoids the
-  document store read-modify-write.** Vespa's
-  [partial updates](https://docs.vespa.ai/en/writing/partial-updates.html)
-  documentation says most attribute fields avoid it and that index fields
-  require it, but it does not say which applies to a tensor attribute that also
-  carries an HNSW index. The article asserts the cheap path. The backfill run has
-  to measure it rather than repeat it.
-- Feed throughput, query latency during the backfill, and the memory and disk
-  cost of the second vector. All unmeasured.
-- Whether the rank-profile switch is really instant at the scale of a full index.
+- Whether the rank-profile switch is really instant at the scale of a full index,
+  and what rollback costs. Steps 7 and 8, not yet run.
+- Per-space normalization as a Vespa rank expression. Step 9, not yet written.
+- Everything here is one content node, 5,183 documents and 384 dimensions. The
+  write-cost result in particular is about what each write shape *touches*, which
+  should carry; the throughput numbers are small-single-node numbers and should
+  not be read as capacity planning.
+- Proton metrics are snapshot aggregates rather than per-request counters, so
+  document store reads are attributed at the granularity of a metrics window.
+  Document store disk usage is cumulative and unambiguous, and it is the figure
+  the conclusion above rests on; the read counter agrees with it.
+- Five seeds in the simulation, one seed here. The Vespa curve matches stage 3's
+  seed 0 exactly, but a single order cannot show the spread the simulation reports.

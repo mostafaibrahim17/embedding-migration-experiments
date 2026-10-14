@@ -4,29 +4,42 @@
  "n_docs": 5183,
  "dim": 384,
  "jsonl_mb": 52.1,
- "wall_seconds": 6.6,
- "docs_per_second": 787.5,
+ "wall_seconds": 3.1,
+ "docs_per_second": 1658.5,
  "feed_client_summary": {
   "feeder.operation.count": 5183,
-  "feeder.seconds": 6.528,
+  "feeder.seconds": 3.062,
   "feeder.ok.count": 5183,
-  "feeder.ok.rate": 793.904,
+  "feeder.ok.rate": 1692.705,
   "feeder.error.count": 0,
   "feeder.inflight.count": 0,
   "http.request.count": 5183,
   "http.request.bytes": 24288386,
-  "http.request.MBps": 3.72,
+  "http.request.MBps": 7.932,
   "http.exception.count": 0,
   "http.response.count": 5183,
   "http.response.bytes": 473060,
-  "http.response.MBps": 0.072,
+  "http.response.MBps": 0.154,
   "http.response.error.count": 0,
-  "http.response.latency.millis.min": 8,
-  "http.response.latency.millis.avg": 31,
-  "http.response.latency.millis.max": 251,
+  "http.response.latency.millis.min": 13,
+  "http.response.latency.millis.avg": 28,
+  "http.response.latency.millis.max": 81,
   "http.response.code.counts": {
    "200": 5183
   }
  },
- "endpoint": "http://127.0.0.1:8090"
+ "endpoint": "http://127.0.0.1:8090",
+ "note": "Two loads of the same 5,183 documents. The cold one is the first feed into a freshly deployed cluster; the warm one re-fed the same documents afterwards, which is the fair comparison for the backfill since that also runs warm.",
+ "cold_first_load": {
+  "wall_seconds": 6.528,
+  "docs_per_second": 793.9,
+  "feeder_ok_rate": 793.904,
+  "errors": 0
+ },
+ "warm_reload": {
+  "wall_seconds": 3.1,
+  "docs_per_second": 1658.5,
+  "feeder_ok_rate": 1692.705,
+  "errors": 0
+ }
 }

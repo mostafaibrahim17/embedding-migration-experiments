@@ -1,0 +1,44 @@
+{
+ "step": "5c",
+ "attribute_memory_bytes_per_field": {
+  "space": {
+   "allocated_bytes": 360320,
+   "used_bytes": 169948,
+   "dead_bytes": 25012,
+   "onhold_bytes": 0
+  },
+  "[documentmetastore]": {
+   "allocated_bytes": 733016,
+   "used_bytes": 301020,
+   "dead_bytes": 232,
+   "onhold_bytes": 0
+  },
+  "emb_new": {
+   "allocated_bytes": 9470432,
+   "used_bytes": 8800312,
+   "dead_bytes": 66844,
+   "onhold_bytes": 0
+  },
+  "doc_id": {
+   "allocated_bytes": 257252,
+   "used_bytes": 190560,
+   "dead_bytes": 3372,
+   "onhold_bytes": 0
+  },
+  "emb_old": {
+   "allocated_bytes": 9425720,
+   "used_bytes": 8780924,
+   "dead_bytes": 61956,
+   "onhold_bytes": 0
+  }
+ },
+ "document_store": {
+  "disk_usage.average": 85075822,
+  "memory_usage.allocated_bytes.average": 85541564,
+  "memory_usage.used_bytes.average": 85369656,
+  "memory_usage.onhold_bytes.average": 0,
+  "cache.memory_usage.average": 48,
+  "memory_usage.dead_bytes.average": 0
+ },
+ "note": "Proton metrics are snapshot aggregates, so read them after the writes settle."
+}

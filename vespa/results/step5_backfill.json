@@ -1,0 +1,554 @@
+{
+ "step": "5+6",
+ "seed": 0,
+ "explore": 40,
+ "n_docs": 5183,
+ "queries": 300,
+ "fractions": [
+  0.0,
+  0.1,
+  0.2,
+  0.3,
+  0.4,
+  0.5,
+  0.6,
+  0.7,
+  0.8,
+  0.9,
+  1.0
+ ],
+ "endpoint": "http://127.0.0.1:8090",
+ "initial_load_docs_per_second_cold": 793.9,
+ "initial_load_docs_per_second_warm": 1658.5,
+ "runs": [
+  {
+   "fraction": 0.0,
+   "migrated_docs": 0,
+   "updated_this_step": 0,
+   "update_wall_seconds": 0.0,
+   "update_docs_per_second": null,
+   "feed_client_summary": {},
+   "graph_recall": 0.59,
+   "exact_recall": 0.59,
+   "graph_latency_p50_ms": 2.3,
+   "graph_latency_p95_ms": 3.4,
+   "graph_queries_with_no_hits": 0,
+   "graph_detail": {
+    "recall_at_10_pooled": 0.59,
+    "retrieved_relevant": 200,
+    "relevant_total": 339,
+    "queries_with_no_hits": 0,
+    "latency_ms_p50": 2.3,
+    "latency_ms_p95": 3.4
+   },
+   "exact_detail": {
+    "recall_at_10_pooled": 0.59,
+    "retrieved_relevant": 200,
+    "relevant_total": 339,
+    "queries_with_no_hits": 0,
+    "latency_ms_p50": 2.2,
+    "latency_ms_p95": 3.2
+   }
+  },
+  {
+   "fraction": 0.1,
+   "migrated_docs": 518,
+   "updated_this_step": 518,
+   "update_wall_seconds": 1.4,
+   "update_docs_per_second": 371.0,
+   "feed_client_summary": {
+    "feeder.operation.count": 518,
+    "feeder.seconds": 1.333,
+    "feeder.ok.count": 518,
+    "feeder.ok.rate": 388.586,
+    "feeder.error.count": 0,
+    "feeder.inflight.count": 0,
+    "http.request.count": 518,
+    "http.request.bytes": 1915298,
+    "http.request.MBps": 1.437,
+    "http.exception.count": 0,
+    "http.response.count": 518,
+    "http.response.bytes": 47316,
+    "http.response.MBps": 0.035,
+    "http.response.error.count": 0,
+    "http.response.latency.millis.min": 11,
+    "http.response.latency.millis.avg": 43,
+    "http.response.latency.millis.max": 88,
+    "http.response.code.counts": {
+     "200": 518
+    }
+   },
+   "graph_recall": 0.3658,
+   "exact_recall": 0.3658,
+   "graph_latency_p50_ms": 2.5,
+   "graph_latency_p95_ms": 3.3,
+   "graph_queries_with_no_hits": 0,
+   "graph_detail": {
+    "recall_at_10_pooled": 0.3658,
+    "retrieved_relevant": 124,
+    "relevant_total": 339,
+    "queries_with_no_hits": 0,
+    "latency_ms_p50": 2.5,
+    "latency_ms_p95": 3.3
+   },
+   "exact_detail": {
+    "recall_at_10_pooled": 0.3658,
+    "retrieved_relevant": 124,
+    "relevant_total": 339,
+    "queries_with_no_hits": 0,
+    "latency_ms_p50": 2.3,
+    "latency_ms_p95": 3.2
+   }
+  },
+  {
+   "fraction": 0.2,
+   "migrated_docs": 1036,
+   "updated_this_step": 518,
+   "update_wall_seconds": 1.14,
+   "update_docs_per_second": 453.2,
+   "feed_client_summary": {
+    "feeder.operation.count": 518,
+    "feeder.seconds": 1.112,
+    "feeder.ok.count": 518,
+    "feeder.ok.rate": 465.75,
+    "feeder.error.count": 0,
+    "feeder.inflight.count": 0,
+    "http.request.count": 518,
+    "http.request.bytes": 1915726,
+    "http.request.MBps": 1.722,
+    "http.exception.count": 0,
+    "http.response.count": 518,
+    "http.response.bytes": 47276,
+    "http.response.MBps": 0.043,
+    "http.response.error.count": 0,
+    "http.response.latency.millis.min": 13,
+    "http.response.latency.millis.avg": 42,
+    "http.response.latency.millis.max": 89,
+    "http.response.code.counts": {
+     "200": 518
+    }
+   },
+   "graph_recall": 0.3156,
+   "exact_recall": 0.3156,
+   "graph_latency_p50_ms": 2.3,
+   "graph_latency_p95_ms": 3.0,
+   "graph_queries_with_no_hits": 0,
+   "graph_detail": {
+    "recall_at_10_pooled": 0.3156,
+    "retrieved_relevant": 107,
+    "relevant_total": 339,
+    "queries_with_no_hits": 0,
+    "latency_ms_p50": 2.3,
+    "latency_ms_p95": 3.0
+   },
+   "exact_detail": {
+    "recall_at_10_pooled": 0.3156,
+    "retrieved_relevant": 107,
+    "relevant_total": 339,
+    "queries_with_no_hits": 0,
+    "latency_ms_p50": 2.2,
+    "latency_ms_p95": 3.2
+   }
+  },
+  {
+   "fraction": 0.3,
+   "migrated_docs": 1554,
+   "updated_this_step": 518,
+   "update_wall_seconds": 1.16,
+   "update_docs_per_second": 446.7,
+   "feed_client_summary": {
+    "feeder.operation.count": 518,
+    "feeder.seconds": 1.12,
+    "feeder.ok.count": 518,
+    "feeder.ok.rate": 462.363,
+    "feeder.error.count": 0,
+    "feeder.inflight.count": 0,
+    "http.request.count": 518,
+    "http.request.bytes": 1915877,
+    "http.request.MBps": 1.71,
+    "http.exception.count": 0,
+    "http.response.count": 518,
+    "http.response.bytes": 47260,
+    "http.response.MBps": 0.042,
+    "http.response.error.count": 0,
+    "http.response.latency.millis.min": 11,
+    "http.response.latency.millis.avg": 43,
+    "http.response.latency.millis.max": 87,
+    "http.response.code.counts": {
+     "200": 518
+    }
+   },
+   "graph_recall": 0.3481,
+   "exact_recall": 0.3481,
+   "graph_latency_p50_ms": 2.4,
+   "graph_latency_p95_ms": 3.6,
+   "graph_queries_with_no_hits": 0,
+   "graph_detail": {
+    "recall_at_10_pooled": 0.3481,
+    "retrieved_relevant": 118,
+    "relevant_total": 339,
+    "queries_with_no_hits": 0,
+    "latency_ms_p50": 2.4,
+    "latency_ms_p95": 3.6
+   },
+   "exact_detail": {
+    "recall_at_10_pooled": 0.3481,
+    "retrieved_relevant": 118,
+    "relevant_total": 339,
+    "queries_with_no_hits": 0,
+    "latency_ms_p50": 2.5,
+    "latency_ms_p95": 3.3
+   }
+  },
+  {
+   "fraction": 0.4,
+   "migrated_docs": 2073,
+   "updated_this_step": 519,
+   "update_wall_seconds": 1.15,
+   "update_docs_per_second": 451.6,
+   "feed_client_summary": {
+    "feeder.operation.count": 519,
+    "feeder.seconds": 1.118,
+    "feeder.ok.count": 519,
+    "feeder.ok.rate": 464.429,
+    "feeder.error.count": 0,
+    "feeder.inflight.count": 0,
+    "http.request.count": 519,
+    "http.request.bytes": 1919194,
+    "http.request.MBps": 1.717,
+    "http.exception.count": 0,
+    "http.response.count": 519,
+    "http.response.bytes": 47376,
+    "http.response.MBps": 0.042,
+    "http.response.error.count": 0,
+    "http.response.latency.millis.min": 17,
+    "http.response.latency.millis.avg": 41,
+    "http.response.latency.millis.max": 89,
+    "http.response.code.counts": {
+     "200": 519
+    }
+   },
+   "graph_recall": 0.3658,
+   "exact_recall": 0.3658,
+   "graph_latency_p50_ms": 2.5,
+   "graph_latency_p95_ms": 3.4,
+   "graph_queries_with_no_hits": 0,
+   "graph_detail": {
+    "recall_at_10_pooled": 0.3658,
+    "retrieved_relevant": 124,
+    "relevant_total": 339,
+    "queries_with_no_hits": 0,
+    "latency_ms_p50": 2.5,
+    "latency_ms_p95": 3.4
+   },
+   "exact_detail": {
+    "recall_at_10_pooled": 0.3658,
+    "retrieved_relevant": 124,
+    "relevant_total": 339,
+    "queries_with_no_hits": 0,
+    "latency_ms_p50": 2.5,
+    "latency_ms_p95": 3.6
+   }
+  },
+  {
+   "fraction": 0.5,
+   "migrated_docs": 2591,
+   "updated_this_step": 518,
+   "update_wall_seconds": 1.33,
+   "update_docs_per_second": 388.4,
+   "feed_client_summary": {
+    "feeder.operation.count": 518,
+    "feeder.seconds": 1.298,
+    "feeder.ok.count": 518,
+    "feeder.ok.rate": 398.94,
+    "feeder.error.count": 0,
+    "feeder.inflight.count": 0,
+    "http.request.count": 518,
+    "http.request.bytes": 1915395,
+    "http.request.MBps": 1.475,
+    "http.exception.count": 0,
+    "http.response.count": 518,
+    "http.response.bytes": 47262,
+    "http.response.MBps": 0.036,
+    "http.response.error.count": 0,
+    "http.response.latency.millis.min": 10,
+    "http.response.latency.millis.avg": 42,
+    "http.response.latency.millis.max": 88,
+    "http.response.code.counts": {
+     "200": 518
+    }
+   },
+   "graph_recall": 0.41,
+   "exact_recall": 0.41,
+   "graph_latency_p50_ms": 2.6,
+   "graph_latency_p95_ms": 5.9,
+   "graph_queries_with_no_hits": 0,
+   "graph_detail": {
+    "recall_at_10_pooled": 0.41,
+    "retrieved_relevant": 139,
+    "relevant_total": 339,
+    "queries_with_no_hits": 0,
+    "latency_ms_p50": 2.6,
+    "latency_ms_p95": 5.9
+   },
+   "exact_detail": {
+    "recall_at_10_pooled": 0.41,
+    "retrieved_relevant": 139,
+    "relevant_total": 339,
+    "queries_with_no_hits": 0,
+    "latency_ms_p50": 2.6,
+    "latency_ms_p95": 3.9
+   }
+  },
+  {
+   "fraction": 0.6,
+   "migrated_docs": 3109,
+   "updated_this_step": 518,
+   "update_wall_seconds": 1.17,
+   "update_docs_per_second": 443.1,
+   "feed_client_summary": {
+    "feeder.operation.count": 518,
+    "feeder.seconds": 1.128,
+    "feeder.ok.count": 518,
+    "feeder.ok.rate": 459.417,
+    "feeder.error.count": 0,
+    "feeder.inflight.count": 0,
+    "http.request.count": 518,
+    "http.request.bytes": 1914973,
+    "http.request.MBps": 1.698,
+    "http.exception.count": 0,
+    "http.response.count": 518,
+    "http.response.bytes": 47294,
+    "http.response.MBps": 0.042,
+    "http.response.error.count": 0,
+    "http.response.latency.millis.min": 20,
+    "http.response.latency.millis.avg": 42,
+    "http.response.latency.millis.max": 90,
+    "http.response.code.counts": {
+     "200": 518
+    }
+   },
+   "graph_recall": 0.4572,
+   "exact_recall": 0.4631,
+   "graph_latency_p50_ms": 2.5,
+   "graph_latency_p95_ms": 3.4,
+   "graph_queries_with_no_hits": 0,
+   "graph_detail": {
+    "recall_at_10_pooled": 0.4572,
+    "retrieved_relevant": 155,
+    "relevant_total": 339,
+    "queries_with_no_hits": 0,
+    "latency_ms_p50": 2.5,
+    "latency_ms_p95": 3.4
+   },
+   "exact_detail": {
+    "recall_at_10_pooled": 0.4631,
+    "retrieved_relevant": 157,
+    "relevant_total": 339,
+    "queries_with_no_hits": 0,
+    "latency_ms_p50": 2.7,
+    "latency_ms_p95": 3.6
+   }
+  },
+  {
+   "fraction": 0.7,
+   "migrated_docs": 3628,
+   "updated_this_step": 519,
+   "update_wall_seconds": 1.11,
+   "update_docs_per_second": 465.9,
+   "feed_client_summary": {
+    "feeder.operation.count": 519,
+    "feeder.seconds": 1.079,
+    "feeder.ok.count": 519,
+    "feeder.ok.rate": 481.204,
+    "feeder.error.count": 0,
+    "feeder.inflight.count": 0,
+    "http.request.count": 519,
+    "http.request.bytes": 1918808,
+    "http.request.MBps": 1.779,
+    "http.exception.count": 0,
+    "http.response.count": 519,
+    "http.response.bytes": 47378,
+    "http.response.MBps": 0.044,
+    "http.response.error.count": 0,
+    "http.response.latency.millis.min": 13,
+    "http.response.latency.millis.avg": 41,
+    "http.response.latency.millis.max": 87,
+    "http.response.code.counts": {
+     "200": 519
+    }
+   },
+   "graph_recall": 0.5074,
+   "exact_recall": 0.5133,
+   "graph_latency_p50_ms": 2.5,
+   "graph_latency_p95_ms": 3.5,
+   "graph_queries_with_no_hits": 0,
+   "graph_detail": {
+    "recall_at_10_pooled": 0.5074,
+    "retrieved_relevant": 172,
+    "relevant_total": 339,
+    "queries_with_no_hits": 0,
+    "latency_ms_p50": 2.5,
+    "latency_ms_p95": 3.5
+   },
+   "exact_detail": {
+    "recall_at_10_pooled": 0.5133,
+    "retrieved_relevant": 174,
+    "relevant_total": 339,
+    "queries_with_no_hits": 0,
+    "latency_ms_p50": 2.6,
+    "latency_ms_p95": 3.8
+   }
+  },
+  {
+   "fraction": 0.8,
+   "migrated_docs": 4146,
+   "updated_this_step": 518,
+   "update_wall_seconds": 1.28,
+   "update_docs_per_second": 405.9,
+   "feed_client_summary": {
+    "feeder.operation.count": 518,
+    "feeder.seconds": 1.244,
+    "feeder.ok.count": 518,
+    "feeder.ok.rate": 416.532,
+    "feeder.error.count": 0,
+    "feeder.inflight.count": 0,
+    "http.request.count": 518,
+    "http.request.bytes": 1915213,
+    "http.request.MBps": 1.54,
+    "http.exception.count": 0,
+    "http.response.count": 518,
+    "http.response.bytes": 47306,
+    "http.response.MBps": 0.038,
+    "http.response.error.count": 0,
+    "http.response.latency.millis.min": 10,
+    "http.response.latency.millis.avg": 42,
+    "http.response.latency.millis.max": 87,
+    "http.response.code.counts": {
+     "200": 518
+    }
+   },
+   "graph_recall": 0.5575,
+   "exact_recall": 0.5575,
+   "graph_latency_p50_ms": 2.3,
+   "graph_latency_p95_ms": 3.3,
+   "graph_queries_with_no_hits": 0,
+   "graph_detail": {
+    "recall_at_10_pooled": 0.5575,
+    "retrieved_relevant": 189,
+    "relevant_total": 339,
+    "queries_with_no_hits": 0,
+    "latency_ms_p50": 2.3,
+    "latency_ms_p95": 3.3
+   },
+   "exact_detail": {
+    "recall_at_10_pooled": 0.5575,
+    "retrieved_relevant": 189,
+    "relevant_total": 339,
+    "queries_with_no_hits": 0,
+    "latency_ms_p50": 2.6,
+    "latency_ms_p95": 3.4
+   }
+  },
+  {
+   "fraction": 0.9,
+   "migrated_docs": 4664,
+   "updated_this_step": 518,
+   "update_wall_seconds": 1.04,
+   "update_docs_per_second": 497.6,
+   "feed_client_summary": {
+    "feeder.operation.count": 518,
+    "feeder.seconds": 1.007,
+    "feeder.ok.count": 518,
+    "feeder.ok.rate": 514.169,
+    "feeder.error.count": 0,
+    "feeder.inflight.count": 0,
+    "http.request.count": 518,
+    "http.request.bytes": 1915146,
+    "http.request.MBps": 1.901,
+    "http.exception.count": 0,
+    "http.response.count": 518,
+    "http.response.bytes": 47248,
+    "http.response.MBps": 0.047,
+    "http.response.error.count": 0,
+    "http.response.latency.millis.min": 20,
+    "http.response.latency.millis.avg": 42,
+    "http.response.latency.millis.max": 87,
+    "http.response.code.counts": {
+     "200": 518
+    }
+   },
+   "graph_recall": 0.5959,
+   "exact_recall": 0.5959,
+   "graph_latency_p50_ms": 2.2,
+   "graph_latency_p95_ms": 3.0,
+   "graph_queries_with_no_hits": 0,
+   "graph_detail": {
+    "recall_at_10_pooled": 0.5959,
+    "retrieved_relevant": 202,
+    "relevant_total": 339,
+    "queries_with_no_hits": 0,
+    "latency_ms_p50": 2.2,
+    "latency_ms_p95": 3.0
+   },
+   "exact_detail": {
+    "recall_at_10_pooled": 0.5959,
+    "retrieved_relevant": 202,
+    "relevant_total": 339,
+    "queries_with_no_hits": 0,
+    "latency_ms_p50": 2.5,
+    "latency_ms_p95": 3.4
+   }
+  },
+  {
+   "fraction": 1.0,
+   "migrated_docs": 5183,
+   "updated_this_step": 519,
+   "update_wall_seconds": 1.39,
+   "update_docs_per_second": 372.6,
+   "feed_client_summary": {
+    "feeder.operation.count": 519,
+    "feeder.seconds": 1.354,
+    "feeder.ok.count": 519,
+    "feeder.ok.rate": 383.235,
+    "feeder.error.count": 0,
+    "feeder.inflight.count": 0,
+    "http.request.count": 519,
+    "http.request.bytes": 1918673,
+    "http.request.MBps": 1.417,
+    "http.exception.count": 0,
+    "http.response.count": 519,
+    "http.response.bytes": 47344,
+    "http.response.MBps": 0.035,
+    "http.response.error.count": 0,
+    "http.response.latency.millis.min": 20,
+    "http.response.latency.millis.avg": 43,
+    "http.response.latency.millis.max": 87,
+    "http.response.code.counts": {
+     "200": 519
+    }
+   },
+   "graph_recall": 0.649,
+   "exact_recall": 0.646,
+   "graph_latency_p50_ms": 2.5,
+   "graph_latency_p95_ms": 3.6,
+   "graph_queries_with_no_hits": 0,
+   "graph_detail": {
+    "recall_at_10_pooled": 0.649,
+    "retrieved_relevant": 220,
+    "relevant_total": 339,
+    "queries_with_no_hits": 0,
+    "latency_ms_p50": 2.5,
+    "latency_ms_p95": 3.6
+   },
+   "exact_detail": {
+    "recall_at_10_pooled": 0.646,
+    "retrieved_relevant": 219,
+    "relevant_total": 339,
+    "queries_with_no_hits": 0,
+    "latency_ms_p50": 2.8,
+    "latency_ms_p95": 4.2
+   }
+  }
+ ]
+}
