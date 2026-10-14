@@ -5,3 +5,5 @@ __pycache__/
 
 # Vespa
 vespa/_sample/
+vespa/scripts/ids.json
+vespa/scripts/*.jsonl

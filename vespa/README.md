@@ -5,8 +5,8 @@ This directory does it in a real engine: one index carrying two embedding fields
 a backfill that fills the second one a slice at a time, a coordinated switch of
 query model and target field, and a rollback.
 
-Status: the application package deploys and serves. The backfill, switch and
-rollback runs are not written yet.
+Status: the index is loaded and the pre-migration baseline reproduces the numpy
+one exactly. The backfill, switch and rollback runs are not written yet.
 
 ## What the schema does
 
@@ -72,6 +72,51 @@ VESPA_ENDPOINT=http://127.0.0.1:8090 python3 scripts/smoke_test.py
 container in that case even though the deployment succeeded. Check
 `curl http://127.0.0.1:8090/status.html` instead.
 
+## Results so far
+
+**Step 3, the initial load.** All 5,183 documents with `emb_old` only and
+`space=0`, through the Vespa CLI feed client: 6.5 seconds, 794 documents/second,
+zero errors, 52 MB of JSONL. That is the number the backfill in step 5 has to be
+compared against, since a backfill of the same index writes the same number of
+documents again. `results/step3_feed.json`.
+
+**Step 4, the pre-migration baseline.** Old-model queries against `emb_old`,
+pooled recall@10 over the same 300 queries and 339 relevance judgements as the
+hnswlib runs. `results/step4_baseline.json`:
+
+| Search | recall@10 | p50 latency | hnswlib equivalent |
+|---|---|---|---|
+| exact (`approximate:false`) | **0.7817** | 2.3 ms | 0.7817, identical |
+| graph, `exploreAdditionalHits` 0 | 0.7463 | 1.8 ms | — |
+| graph, `exploreAdditionalHits` 40 | 0.7788 | 1.9 ms | ef_search 50 |
+| graph, `exploreAdditionalHits` 190 | 0.7817 | 2.2 ms | ef_search 200 |
+
+Vespa's exact search returns the same pooled recall as the numpy run to four
+decimals, 265 of 339 relevant documents either way. The embeddings, the feed, the
+`prenormalized-angular` metric, the query path and the metric definition all
+agree with the simulation, so a number from Vespa can be set beside a number from
+`../scripts/` without an asterisk.
+
+Exploring about 50 candidates lands within 0.4% of exact, which is the same
+relationship `../scripts/stage3_hnsw_and_distant_pair.py` reports for ef_search
+50. The two graph configurations are comparable.
+
+### One thing worth knowing before tuning an ANN query
+
+`hnsw.exploreAdditionalHits` only works as a YQL annotation on the operator:
+
+```
+{targetHits:10, hnsw.exploreAdditionalHits:190}nearestNeighbor(emb_old, q)
+```
+
+Passing it as a query property instead is accepted and then silently ignored.
+Recall sat at 0.7463 for property values of 0, 40, 90, 190 and 490 before the
+annotation moved it to 0.7817. Vespa validates query properties and rejects
+unknown ones with a 400 — `ranking.matching.hnsw.exploreAdditionalHits` fails
+that way — but it does not validate YQL annotations, so a misspelled one tunes
+nothing and reports no error. Raising `targetHits` to 100 reaches exact recall
+too, at the cost of a larger result set to rank.
+
 ## What is verified so far
 
 - The schema deploys: two HNSW-indexed tensor fields on one document type,
@@ -83,6 +128,22 @@ container in that case even though the deployment succeeded. Check
   un-migrated documents drop out of new-space retrieval rather than scoring badly.
 - `approximate:false` gives exact search for a reference number, on the same
   index, without a second deployment.
+- The whole pipeline agrees with the simulation: Vespa exact search reproduces
+  the numpy baseline at 0.7817.
+
+## Running the migration
+
+```bash
+python3 scripts/prepare_embeddings.py                    # embeds once, ~1 min, shares ../scripts cache
+python3 scripts/feed_old_space.py                        # step 3, the pre-migration index
+python3 scripts/eval_recall.py --profile old --exact      # step 4, expect 0.7817
+python3 scripts/eval_recall.py --profile old --explore 40 # the graph at ~ef 50
+```
+
+`prepare_embeddings.py` writes the four embedding arrays into `../scripts/` under
+the names stage 3 uses, so the two halves of the repo share one cache and one
+document ordering. It also writes `scripts/ids.json` so nothing downstream needs
+the datasets library.
 
 ## What is not verified
 

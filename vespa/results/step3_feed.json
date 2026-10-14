@@ -1,0 +1,32 @@
+{
+ "step": 3,
+ "what": "initial load, emb_old only, space=0",
+ "n_docs": 5183,
+ "dim": 384,
+ "jsonl_mb": 52.1,
+ "wall_seconds": 6.6,
+ "docs_per_second": 787.5,
+ "feed_client_summary": {
+  "feeder.operation.count": 5183,
+  "feeder.seconds": 6.528,
+  "feeder.ok.count": 5183,
+  "feeder.ok.rate": 793.904,
+  "feeder.error.count": 0,
+  "feeder.inflight.count": 0,
+  "http.request.count": 5183,
+  "http.request.bytes": 24288386,
+  "http.request.MBps": 3.72,
+  "http.exception.count": 0,
+  "http.response.count": 5183,
+  "http.response.bytes": 473060,
+  "http.response.MBps": 0.072,
+  "http.response.error.count": 0,
+  "http.response.latency.millis.min": 8,
+  "http.response.latency.millis.avg": 31,
+  "http.response.latency.millis.max": 251,
+  "http.response.code.counts": {
+   "200": 5183
+  }
+ },
+ "endpoint": "http://127.0.0.1:8090"
+}
