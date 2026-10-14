@@ -1,0 +1,77 @@
+{
+ "step": "7+8",
+ "endpoint": "http://127.0.0.1:8090",
+ "n_docs": 5183,
+ "explore": 40,
+ "at_full_migration": {
+  "mixed": {
+   "recall_at_10_pooled": 0.646,
+   "retrieved_relevant": 219,
+   "relevant_total": 339,
+   "queries_with_no_hits": 0,
+   "latency_ms_p50": 3.0,
+   "latency_ms_p95": 5.4
+  },
+  "new": {
+   "recall_at_10_pooled": 0.646,
+   "retrieved_relevant": 219,
+   "relevant_total": 339,
+   "queries_with_no_hits": 0,
+   "latency_ms_p50": 2.5,
+   "latency_ms_p95": 4.5
+  },
+  "old_rollback_target": {
+   "recall_at_10_pooled": 0.7788,
+   "retrieved_relevant": 264,
+   "relevant_total": 339,
+   "queries_with_no_hits": 0,
+   "latency_ms_p50": 2.2,
+   "latency_ms_p95": 3.3
+  }
+ },
+ "switch_preloaded_profile_ms": {
+  "to_new": 3.0,
+  "to_old": 2.7,
+  "deploys_required": 0,
+  "restarts_required": 0
+ },
+ "switch_via_deploy": {
+  "deploy_command_seconds": 0.7,
+  "profile_usable_after_seconds": 1.0,
+  "total_seconds": 1.7,
+  "queries_served_during_convergence": 2,
+  "queries_failed_during_convergence": 0
+ },
+ "rollback_with_old_vectors_present": {
+  "recall": 0.7788,
+  "seconds": 1.1,
+  "mechanism": "name the old rank profile and the old query model; nothing is written"
+ },
+ "unset_tensor_via_partial_update": {
+  "assign_null": {
+   "status": "HTTP 200",
+   "field_removed": true
+  },
+  "remove_zero": {
+   "status": "HTTP 400",
+   "detail": "{\"pathId\":\"/document/v1/scifact/scifact/docid/4983\",\"message\":\"Error in 'emb_old': Expected start of JSON object, got VALUE_NUMBER_INT\"}",
+   "field_removed": false
+  }
+ },
+ "after_dropping_old_vectors": {
+  "mechanism": "partial update, {\"emb_old\": {\"assign\": null}}; no document rewrite needed",
+  "drop_seconds": 5.92,
+  "docs": 5183,
+  "recall_under_old_profile": 0.0,
+  "queries_with_no_hits": 300
+ },
+ "restoring_old_vectors": {
+  "refeed_seconds": 5.49,
+  "recall_under_old_profile": 0.7817,
+  "note": "these vectors were still on local disk. In a real rollback they would have to be recomputed, which is the cost of the original embedding run, not of this feed."
+ },
+ "left_as_found": {
+  "refeed_seconds": 4.12,
+  "new_profile_recall": 0.646
+ }
+}

@@ -5,9 +5,10 @@ This directory does it in a real engine: one index carrying two embedding fields
 a backfill that fills the second one a slice at a time, a coordinated switch of
 query model and target field, and a rollback.
 
-Status: the index is loaded, the baseline reproduces the numpy one exactly, and
-the backfill reproduces the article's low point at every migration fraction. The
-coordinated switch and the rollback are not written yet.
+Status: the index is loaded, the baseline reproduces the numpy one exactly, the
+backfill reproduces the article's low point at every migration fraction, and the
+switch and rollback are measured. Per-space normalization as a rank expression is
+the remaining piece.
 
 ## What the schema does
 
@@ -173,6 +174,59 @@ Carrying both spaces doubles vector memory for the length of the migration and
 leaves the document payload alone, which is the trade the article describes,
 priced.
 
+**Step 7, the coordinated switch.** With every document migrated,
+`results/step78_switch_rollback.json`:
+
+| Profile | Query model | recall@10 |
+|---|---|---|
+| `mixed` | new | 0.6460 |
+| `new` | new | 0.6460 |
+| `old` | old | 0.7788 |
+
+The mixed profile and the new one agree once nothing is left in the old space, so
+the switch costs nothing in quality and can be made whenever it is convenient
+rather than in a window. Switching is one query naming the other profile: 3.0 ms
+to the new space, 2.7 ms back, no deploy and no restart.
+
+Had the profile not been deployed in advance, adding one took 0.7 s for
+`vespa deploy` to return and about 1.0 s more before a query could use it, with
+queries served throughout and none failing. So pre-deploying both profiles turns
+a roughly two-second change into a three-millisecond one. That is a real
+advantage and a small one: the honest version is that on a single node the deploy
+route is also cheap and does not drop traffic. The reason to pre-deploy is that
+the switch becomes a routing decision you can make and unmake per query, not that
+a deploy would have hurt.
+
+**Step 8, rollback.** While both vectors are present, rollback is the same
+operation as the switch: name the old profile and the old query model, write
+nothing, and recall returns to 0.78 immediately.
+
+That changes completely once the old vectors are gone, and getting rid of them is
+easier than it should be:
+
+| Step | Mechanism | Cost | recall@10, old profile |
+|---|---|---|---|
+| drop `emb_old`, all 5,183 documents | partial update, `{"assign": null}` | 5.9 s | **0.0000**, 300/300 queries empty |
+| restore from vectors on local disk | partial update, `assign` | 5.5 s | 0.7817 |
+
+A tensor attribute can be unset with a partial update: `{"emb_old": {"assign":
+null}}` returns 200 and the field really is gone, confirmed by reading the
+document back rather than by trusting the status code. (`{"remove": 0}` is a 400:
+*Expected start of JSON object, got VALUE_NUMBER_INT*.) No document rewrite is
+needed, so reclaiming 8.8 MB per million-ish vectors takes six seconds and one
+feed.
+
+Which is the trap. Dropping the old space is fast, cheap and reversible-looking,
+and the moment it is done the old profile returns nothing at all — not degraded
+results, zero hits on every query. Recovery needs the old vectors back, and the
+5.5 s above is only the feed: those vectors were still sitting on local disk. In
+a real rollback they would have to be recomputed with the old model first, which
+is the original embedding run again.
+
+So the thing to keep is not a plan for rollback, it is the old field. Dropping it
+is the step that ends the migration, and it belongs after the evaluation
+threshold has been met on live traffic, not after the backfill finishes.
+
 ### One thing worth knowing before tuning an ANN query
 
 `hnsw.exploreAdditionalHits` only works as a YQL annotation on the operator:
@@ -213,7 +267,12 @@ python3 scripts/eval_recall.py --profile old --explore 40  # the graph at ~ef 50
 python3 scripts/backfill_and_measure.py                   # steps 5 and 6, the whole curve
 python3 scripts/update_cost.py                            # step 5b, what each write shape costs
 python3 scripts/field_memory.py                           # step 5c, per-field memory
+python3 scripts/switch_and_rollback.py                    # steps 7 and 8
 ```
+
+`switch_and_rollback.py` expects a fully migrated index, deploys a throwaway
+schema variant and restores the committed one, and puts the index back as it
+found it.
 
 `backfill_and_measure.py` expects the index in the state `feed_old_space.py`
 leaves it in, so re-run that first to start over. `SEED` picks the migration
@@ -228,9 +287,15 @@ the datasets library.
 
 ## What is not verified
 
-- Whether the rank-profile switch is really instant at the scale of a full index,
-  and what rollback costs. Steps 7 and 8, not yet run.
 - Per-space normalization as a Vespa rank expression. Step 9, not yet written.
+- The switch and rollback timings are single-node and 5,183 documents. What
+  should carry is the shape: a pre-deployed profile makes the switch a per-query
+  decision, and unsetting a tensor attribute needs no document rewrite. The
+  seconds should not.
+- Recall under the old profile came back as 0.7788 in one run of step 7 and
+  0.7817 in another, both at `exploreAdditionalHits` 40. That is graph
+  non-determinism of the size ../README documents, not an effect of the
+  migration.
 - Everything here is one content node, 5,183 documents and 384 dimensions. The
   write-cost result in particular is about what each write shape *touches*, which
   should carry; the throughput numbers are small-single-node numbers and should
