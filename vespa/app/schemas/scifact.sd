@@ -1,0 +1,93 @@
+# SciFact documents carrying two embedding spaces at once: the old model's vector
+# and, once the backfill reaches them, the new model's vector. The point of the
+# schema is that a document can hold both without being rewritten, which is the
+# claim the article makes about Vespa and the thing the backfill run measures.
+
+schema scifact {
+
+    document scifact {
+
+        field doc_id type string {
+            indexing: summary | attribute
+        }
+
+        field text type string {
+            indexing: summary | index
+        }
+
+        # Which space this document's live vector is in: 0 = old, 1 = migrated.
+        # fast-search because every mixed-state query filters on it.
+        field space type int {
+            indexing: summary | attribute
+            attribute: fast-search
+        }
+
+        # Both vectors are L2-normalized by the embedder, so prenormalized-angular
+        # is the right metric. M and ef_construction match the hnswlib settings in
+        # scripts/stage3_hnsw_and_distant_pair.py so the two runs are comparable.
+        field emb_old type tensor<float>(x[384]) {
+            indexing: attribute | index
+            attribute {
+                distance-metric: prenormalized-angular
+            }
+            index {
+                hnsw {
+                    max-links-per-node: 16
+                    neighbors-to-explore-at-insert: 200
+                }
+            }
+        }
+
+        field emb_new type tensor<float>(x[384]) {
+            indexing: attribute | index
+            attribute {
+                distance-metric: prenormalized-angular
+            }
+            index {
+                hnsw {
+                    max-links-per-node: 16
+                    neighbors-to-explore-at-insert: 200
+                }
+            }
+        }
+    }
+
+    fieldset default {
+        fields: text
+    }
+
+    # Before the migration: old query model against old document vectors.
+    rank-profile old {
+        inputs {
+            query(q) tensor<float>(x[384])
+        }
+        first-phase {
+            expression: closeness(field, emb_old)
+        }
+    }
+
+    # After the migration: new query model against new document vectors. Deployed
+    # from the start, so the switch at the end is a query parameter, not a deploy.
+    rank-profile new {
+        inputs {
+            query(q) tensor<float>(x[384])
+        }
+        first-phase {
+            expression: closeness(field, emb_new)
+        }
+    }
+
+    # The mixed state. One new-model query vector reaches two HNSW graphs through
+    # two labelled nearestNeighbor operators, and each document is scored in
+    # whichever space it currently lives in. Taking the max of two closeness
+    # values across different embedding spaces is the score incomparability the
+    # article describes, made explicit as a rank expression.
+    rank-profile mixed {
+        inputs {
+            query(q) tensor<float>(x[384])
+        }
+        first-phase {
+            expression: max(closeness(label, "n"), closeness(label, "o"))
+        }
+    }
+}

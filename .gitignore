@@ -2,3 +2,6 @@ emb_*.npy
 venv/
 __pycache__/
 .DS_Store
+
+# Vespa
+vespa/_sample/
