@@ -90,4 +90,91 @@ schema scifact {
             expression: max(closeness(label, "n"), closeness(label, "o"))
         }
     }
+
+    # Per-space normalization, as a rank expression rather than a pass in numpy.
+    #
+    # A first-phase expression sees one document at a time, so it cannot know the
+    # distribution of scores it is part of. The per-space mean and standard
+    # deviation therefore arrive as query inputs, computed per query by the
+    # caller, and the expression z-scores each document inside its own space
+    # before the two spaces are compared.
+    #
+    # It ranks on the raw cosine rather than on closeness(), because that is the
+    # quantity the numpy runs normalize and the two have to be the same thing to
+    # be comparable. The vectors are unit length, so a dot product is the cosine.
+    rank-profile mixed_normalized {
+        inputs {
+            query(q) tensor<float>(x[384])
+            query(mu_n) double
+            query(sd_n) double
+            query(mu_o) double
+            query(sd_o) double
+        }
+        function cos_new() {
+            expression: sum(query(q) * attribute(emb_new))
+        }
+        function cos_old() {
+            expression: sum(query(q) * attribute(emb_old))
+        }
+        first-phase {
+            expression {
+                if (attribute(space) == 1,
+                    (cos_new() - query(mu_n)) / query(sd_n),
+                    (cos_old() - query(mu_o)) / query(sd_o))
+            }
+        }
+    }
+
+    # The same mixed state ranked on raw cosine, so the raw and normalized
+    # comparison differs only by the normalization.
+    rank-profile mixed_cosine {
+        inputs {
+            query(q) tensor<float>(x[384])
+        }
+        function cos_new() {
+            expression: sum(query(q) * attribute(emb_new))
+        }
+        function cos_old() {
+            expression: sum(query(q) * attribute(emb_old))
+        }
+        first-phase {
+            expression {
+                if (attribute(space) == 1, cos_new(), cos_old())
+            }
+        }
+    }
+
+    # The other way to migrate: overwrite the one vector field in place, so a
+    # single HNSW graph ends up holding vectors from both models. `space` still
+    # records which model wrote each document's vector. Used by
+    # scripts/inplace_vs_dualfield.py to test whether the second field is what
+    # makes per-space normalization work on a graph.
+    rank-profile inplace_normalized {
+        inputs {
+            query(q) tensor<float>(x[384])
+            query(mu_n) double
+            query(sd_n) double
+            query(mu_o) double
+            query(sd_o) double
+        }
+        function cos_old() {
+            expression: sum(query(q) * attribute(emb_old))
+        }
+        first-phase {
+            expression {
+                if (attribute(space) == 1,
+                    (cos_old() - query(mu_n)) / query(sd_n),
+                    (cos_old() - query(mu_o)) / query(sd_o))
+            }
+        }
+    }
+
+    rank-profile inplace_cosine {
+        inputs {
+            query(q) tensor<float>(x[384])
+        }
+        first-phase {
+            expression: sum(query(q) * attribute(emb_old))
+        }
+    }
 }

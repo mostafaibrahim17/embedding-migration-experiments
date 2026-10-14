@@ -40,7 +40,7 @@ def yql_mixed(**kw):
     space it currently occupies."""
     n = annotation(label="n", **kw)
     o = annotation(label="o", **kw)
-    return ("select doc_id from scifact where "
+    return ("select doc_id, space from scifact where "
             f"({n}nearestNeighbor(emb_new, q) and space = 1) or "
             f"({o}nearestNeighbor(emb_old, q) and space = 0)")
 

@@ -1,0 +1,76 @@
+{
+ "step": "9b",
+ "seed": 0,
+ "explore": 40,
+ "target_hits": 50,
+ "fractions": [
+  0.0,
+  0.1,
+  0.2,
+  0.3
+ ],
+ "migration_style": "in place: one tensor field overwritten, one HNSW graph holding both spaces",
+ "compare_with": "results/step9_normalization.json, the same migration done as a second field",
+ "stage3_seed0_hnsw_inplace": {
+  "raw": [
+   0.59,
+   0.3569,
+   0.3068,
+   0.3274
+  ],
+  "norm": [
+   0.59,
+   0.4425,
+   0.3746,
+   0.3894
+  ],
+  "reach": [
+   0.794,
+   0.5273,
+   0.3986,
+   0.3528
+  ]
+ },
+ "runs": [
+  {
+   "fraction": 0.0,
+   "migrated_docs": 0,
+   "overwrite_seconds": 0.0,
+   "exact_raw": 0.59,
+   "exact_normalized": 0.59,
+   "graph_raw": 0.59,
+   "graph_normalized": 0.59,
+   "graph_reach_old_space_relevant": 0.8112
+  },
+  {
+   "fraction": 0.1,
+   "migrated_docs": 518,
+   "overwrite_seconds": 1.11,
+   "exact_raw": 0.3658,
+   "exact_normalized": 0.5959,
+   "graph_raw": 0.3628,
+   "graph_normalized": 0.5575,
+   "graph_reach_old_space_relevant": 0.5902
+  },
+  {
+   "fraction": 0.2,
+   "migrated_docs": 1036,
+   "overwrite_seconds": 1.37,
+   "exact_raw": 0.3156,
+   "exact_normalized": 0.5811,
+   "graph_raw": 0.3097,
+   "graph_normalized": 0.4749,
+   "graph_reach_old_space_relevant": 0.4384
+  },
+  {
+   "fraction": 0.3,
+   "migrated_docs": 1554,
+   "overwrite_seconds": 1.18,
+   "exact_raw": 0.3481,
+   "exact_normalized": 0.5782,
+   "graph_raw": 0.3422,
+   "graph_normalized": 0.4749,
+   "graph_reach_old_space_relevant": 0.3975
+  }
+ ]
+}

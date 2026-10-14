@@ -5,10 +5,11 @@ This directory does it in a real engine: one index carrying two embedding fields
 a backfill that fills the second one a slice at a time, a coordinated switch of
 query model and target field, and a rollback.
 
-Status: the index is loaded, the baseline reproduces the numpy one exactly, the
-backfill reproduces the article's low point at every migration fraction, and the
-switch and rollback are measured. Per-space normalization as a rank expression is
-the remaining piece.
+Status: all of it runs. The baseline reproduces the numpy one exactly, the
+backfill reproduces the article's low point at every migration fraction, the
+switch and rollback are measured, and per-space normalization runs as a rank
+expression — where it turns out to behave differently from the simulation, for a
+reason worth the article's attention.
 
 ## What the schema does
 
@@ -26,6 +27,9 @@ Three rank profiles, all deployed at once:
 |---|---|---|
 | `old` | `closeness(field, emb_old)` | before the migration |
 | `mixed` | `max(closeness(label, "n"), closeness(label, "o"))` | during the backfill |
+| `mixed_cosine` | the same, on raw cosine | the raw baseline for step 9 |
+| `mixed_normalized` | per-space z-score of cosine | the normalization fix |
+| `inplace_cosine`, `inplace_normalized` | one field holding both spaces | the step 9b control |
 | `new` | `closeness(field, emb_new)` | after the switch |
 
 The `mixed` profile is the interesting one. A single new-model query vector
@@ -227,6 +231,70 @@ So the thing to keep is not a plan for rollback, it is the old field. Dropping i
 is the step that ends the migration, and it belongs after the evaluation
 threshold has been met on live traffic, not after the backfill finishes.
 
+**Step 9, normalization as a rank expression, and the result that changes the
+story.** The simulation repairs the low point by z-scoring each space separately,
+and finds this works in exact search but mostly fails on a graph, because
+rescoring cannot promote a document the graph never returned. Running the same
+fix in Vespa reproduces the first half and contradicts the second.
+
+A first-phase expression sees one document at a time and cannot know the
+distribution it belongs to, so the per-space mean and standard deviation are
+computed per query by the caller and passed as query inputs:
+
+```
+if (attribute(space) == 1,
+    (cos_new() - query(mu_n)) / query(sd_n),
+    (cos_old() - query(mu_o)) / query(sd_o))
+```
+
+It ranks on a dot product rather than `closeness()`, because the vectors are unit
+length so the dot product is the cosine, which is the quantity the numpy runs
+normalize. The statistics come from every document in each space, the same oracle
+the simulation's exact normalization uses.
+
+At 20% migrated, with each operator given 50 candidates to match stage 3's
+ef_search 50 (`results/step9_normalization.json`,
+`results/step9b_inplace_vs_dualfield.json`):
+
+| Migration style | graph raw | graph normalized | old-space reach |
+|---|---|---|---|
+| **two fields, `emb_old` + `emb_new`** | 0.3156 | **0.5870** | **0.8043** |
+| **one field overwritten in place** | 0.3097 | 0.4749 | 0.4384 |
+| stage 3, single mixed hnswlib graph | 0.3068 | 0.3746 | 0.3986 |
+
+With two fields, normalization recovers the low point completely: 0.5870 on the
+graph is exactly what exact search gets. Reach of relevant old-space documents
+does not fall at all over the migration — 0.811, 0.807, 0.804, 0.829 at 0, 10, 20
+and 30% — where the simulation's reach collapses 0.794, 0.527, 0.399, 0.353.
+
+The reason is not that Vespa normalizes better. It is that a mixed state in Vespa
+is necessarily two fields, so it is two HNSW graphs and two `nearestNeighbor`
+operators, each with its own candidate budget. A migrated document scoring higher
+cannot take a slot from the old space, because it is not competing for the same
+slots: at 20% migrated the candidate list arrives as 50 from the new space and 40
+from the old. The crowding-out that defeats normalization in the simulation
+cannot happen at retrieval time, only at ranking time, and ranking is what
+normalization fixes.
+
+Overwriting the single field in place puts both spaces back in one graph, and the
+failure returns: reach collapses 0.811, 0.590, 0.438, 0.398 and normalization
+recovers only 0.4749 of 0.5870. That run is `inplace_vs_dualfield.py`, and it
+exists to test exactly this, because the alternative explanation — that Vespa's
+graph is simply better — predicts no such collapse.
+
+So the article's warning holds for in-place model changes and not for dual-write,
+and the recommendation it already makes for Vespa turns out to be protected by a
+mechanism it does not mention. The second embedding field is not only a way to
+keep both versions queryable. It is what keeps the old space reachable while the
+index is mixed.
+
+One practitioner note from getting this wrong first. With `targetHits` equal to
+the number of hits returned, normalization changed nothing whatsoever in the
+in-place case, 0.3068 before and after, because rescoring ten candidates to
+return ten documents cannot alter the set. Rescoring needs a candidate list
+wider than the result, and how much wider is the whole lever. Set `TARGET_HITS`
+to reproduce either setting.
+
 ### One thing worth knowing before tuning an ANN query
 
 `hnsw.exploreAdditionalHits` only works as a YQL annotation on the operator:
@@ -268,7 +336,13 @@ python3 scripts/backfill_and_measure.py                   # steps 5 and 6, the w
 python3 scripts/update_cost.py                            # step 5b, what each write shape costs
 python3 scripts/field_memory.py                           # step 5c, per-field memory
 python3 scripts/switch_and_rollback.py                    # steps 7 and 8
+TARGET_HITS=50 python3 scripts/normalization.py           # step 9, the dual-field fix
+TARGET_HITS=50 python3 scripts/inplace_vs_dualfield.py    # step 9b, the control
 ```
+
+Steps 9 and 9b both want a pre-migration index, so re-run `feed_old_space.py`
+before each. `inplace_vs_dualfield.py` overwrites `emb_old` deliberately and
+restores it when it finishes.
 
 `switch_and_rollback.py` expects a fully migrated index, deploys a throwaway
 schema variant and restores the committed one, and puts the index back as it
@@ -287,7 +361,9 @@ the datasets library.
 
 ## What is not verified
 
-- Per-space normalization as a Vespa rank expression. Step 9, not yet written.
+- The normalization statistics are an oracle: computed over every document in
+  each space by the caller. A real implementation would estimate them, and the
+  estimate's error is not measured here.
 - The switch and rollback timings are single-node and 5,183 documents. What
   should carry is the shape: a pre-deployed profile makes the switch a per-query
   decision, and unsetting a tensor attribute needs no document rewrite. The
