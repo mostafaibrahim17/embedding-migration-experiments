@@ -1,7 +1,7 @@
 # What happens to recall while you migrate embedding models
 
 Code and raw results for the experiments behind the article *Half-migrating your
-embeddings is worse than not migrating at all*.
+embeddings is worse than either end*.
 
 The question: when you move a vector index from one embedding model to another a
 slice at a time, what does recall do on the way? The expected answer is a dip that
