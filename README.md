@@ -61,6 +61,7 @@ results/     raw JSON written by each run
 | `stage5_queries_last.py` | The reverse order: documents migrate first, queries switch last | `stage5_results.json` |
 | `stage6_fiqa.py` | Everything above repeated on FiQA, 57,638 documents | `fiqa_results.json` |
 | `stage7_ef_search.py` | Does a wider graph search (ef_search 200) recover more than ef 50? | `stage7_ef_results.json` |
+| `stage8_normalization_statistics.py` | Where the per-space statistics have to come from, and how little of each space they need | `stage8_normalization_statistics.json` |
 
 The Vespa half of the repo is in `vespa/`, with its own README. It runs the same
 migration in a real engine and holds the controls that separate what a second
@@ -175,8 +176,18 @@ Where the rest of the article's figures live:
   3072-dimensional pair behaves the same way.
 - Five seeds on 300 SciFact queries and 648 FiQA queries. The spread is reported above
   but there are no confidence intervals, and the per-seed depth varies by 0.06.
-- Per-space normalization is an oracle fix. It needs a model tag on every vector and a
-  rescoring pass, and it assumes you know which space each document is in.
+- Per-space normalization needs a model tag on every vector, a rescoring pass, and
+  knowing which space each document is in. It was described here as an oracle fix,
+  on the grounds that its statistics come from every document. Stage 8 shows that
+  part is wrong: the statistics are two numbers per space, and 256 sampled documents
+  per space land within 0.002 of using all of them (0.5947 against 0.5965). What the
+  fix cannot do is cheap is recover a document the candidate list never held.
+- The two halves of this repo do not normalize identically, and the difference is
+  worth about 0.10. stage 3 scores a candidate list and can only take each space's
+  mean and standard deviation from the candidates it returned; the Vespa rank profile
+  receives them computed over every document. At a fixed 50-candidate budget that is
+  0.4147 against 0.5156 (`stage8_normalization_statistics.json`), which is most of why
+  the simulation reports 0.38 for the single-field case and Vespa reports 0.48.
 - hnswlib inserts in parallel, so graph results are not bit-reproducible. Comparing the
   ef 50 runs in `stage3_results.json` and `stage7_ef_results.json`, which run identical
   code on identical embeddings, per-seed recall differs by up to 0.006 and reach by up
