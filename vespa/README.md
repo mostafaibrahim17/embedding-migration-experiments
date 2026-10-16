@@ -57,7 +57,7 @@ Verified on Vespa **8.763.13**, Vespa CLI 8.699.8, Docker 29.2.0 on macOS
 
 ```bash
 docker run --detach --name vespa --hostname vespa-container \
-  --publish 8090:8080 --publish 19071:19071 vespaengine/vespa:8.763.13
+  --publish 8080:8080 --publish 19071:19071 vespaengine/vespa:8.763.13
 
 vespa config set target local
 vespa deploy --wait 300 ./app
@@ -65,18 +65,22 @@ vespa deploy --wait 300 ./app
 python3 scripts/smoke_test.py          # feeds 2 documents, runs 4 query shapes, cleans up
 ```
 
-If something else on the machine already holds port 8080, publish Vespa
-somewhere else and tell the smoke test where it went:
+Everything below assumes Vespa on 8080. **The committed results were produced on
+8090**, because port 8080 was taken on the machine they were run on, which is why
+every results JSON records `"endpoint": "http://127.0.0.1:8090"`. Nothing depends
+on the number. If 8080 is taken for you too, publish somewhere else and tell the
+scripts where it went:
 
 ```bash
 docker run --detach --name vespa --hostname vespa-container \
   --publish 8090:8080 --publish 19071:19071 vespaengine/vespa:8.763.13
-VESPA_ENDPOINT=http://127.0.0.1:8090 python3 scripts/smoke_test.py
+export VESPA_ENDPOINT=http://127.0.0.1:8090
+python3 scripts/smoke_test.py
 ```
 
-`vespa deploy --wait` probes the query port directly and will report an unhealthy
-container in that case even though the deployment succeeded. Check
-`curl http://127.0.0.1:8090/status.html` instead.
+One symptom of moving it: `vespa deploy --wait` probes the query port directly on
+8080 and will report an unhealthy container even though the deployment succeeded.
+Check `curl http://127.0.0.1:8090/status.html` instead.
 
 ## Results so far
 
@@ -542,7 +546,7 @@ Then the runs, in this order. Every line is here, resets included, so the block
 can be pasted top to bottom:
 
 ```bash
-export VESPA_ENDPOINT=http://127.0.0.1:8090
+export VESPA_ENDPOINT=http://127.0.0.1:8080          # 8090 if you moved it above
 R="NO_RECORD=1 python3 scripts/feed_old_space.py"         # the reset, used below
 
 python3 scripts/prepare_embeddings.py                     # embeds once, ~1 min, shares ../scripts cache
