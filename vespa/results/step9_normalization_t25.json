@@ -1,0 +1,297 @@
+{
+ "step": 9,
+ "seed": 0,
+ "explore": 40,
+ "target_hits": 25,
+ "fractions": [
+  0.0,
+  0.1,
+  0.2,
+  0.3,
+  0.4,
+  0.5,
+  0.6,
+  0.7,
+  0.8,
+  0.9,
+  1.0
+ ],
+ "endpoint": "http://127.0.0.1:8090",
+ "normalization": "per-query z-score within each space, statistics over all documents, passed as query inputs and applied in first-phase",
+ "stage3_seed0_reference": {
+  "exact_raw": [
+   0.59,
+   0.3658,
+   0.3156,
+   0.3481
+  ],
+  "exact_norm": [
+   0.59,
+   0.6047,
+   0.587,
+   0.5959
+  ],
+  "hnsw_inplace_raw": [
+   0.59,
+   0.3569,
+   0.3068,
+   0.3274
+  ],
+  "hnsw_inplace_norm": [
+   0.59,
+   0.4425,
+   0.3746,
+   0.3894
+  ],
+  "hnsw_inplace_reach": [
+   0.794,
+   0.5273,
+   0.3986,
+   0.3528
+  ]
+ },
+ "runs": [
+  {
+   "fraction": 0.0,
+   "migrated_docs": 0,
+   "update_seconds": 0.0,
+   "exact_raw": 0.59,
+   "exact_normalized": 0.59,
+   "graph_raw": 0.59,
+   "graph_normalized": 0.59,
+   "graph_reach_old_space_relevant": 0.7198,
+   "mixed_list_split": {
+    "mean_new_space_hits": 0.0,
+    "mean_old_space_hits": 25.0,
+    "mean_total_candidates": 25.0,
+    "target_hits_per_operator": 25
+   },
+   "latency_p50_ms": {
+    "exact_raw": 1.9,
+    "exact_norm": 2.0,
+    "graph_raw": 1.8,
+    "graph_norm": 1.5
+   }
+  },
+  {
+   "fraction": 0.1,
+   "migrated_docs": 518,
+   "update_seconds": 0.85,
+   "exact_raw": 0.3658,
+   "exact_normalized": 0.6047,
+   "graph_raw": 0.3658,
+   "graph_normalized": 0.6018,
+   "graph_reach_old_space_relevant": 0.7279,
+   "mixed_list_split": {
+    "mean_new_space_hits": 25.0,
+    "mean_old_space_hits": 22.46,
+    "mean_total_candidates": 47.46,
+    "target_hits_per_operator": 25
+   },
+   "latency_p50_ms": {
+    "exact_raw": 2.1,
+    "exact_norm": 1.8,
+    "graph_raw": 1.7,
+    "graph_norm": 1.7
+   }
+  },
+  {
+   "fraction": 0.2,
+   "migrated_docs": 1036,
+   "update_seconds": 0.8,
+   "exact_raw": 0.3156,
+   "exact_normalized": 0.587,
+   "graph_raw": 0.3156,
+   "graph_normalized": 0.59,
+   "graph_reach_old_space_relevant": 0.7283,
+   "mixed_list_split": {
+    "mean_new_space_hits": 25.0,
+    "mean_old_space_hits": 19.85,
+    "mean_total_candidates": 44.85,
+    "target_hits_per_operator": 25
+   },
+   "latency_p50_ms": {
+    "exact_raw": 2.4,
+    "exact_norm": 2.1,
+    "graph_raw": 1.8,
+    "graph_norm": 2.0
+   }
+  },
+  {
+   "fraction": 0.3,
+   "migrated_docs": 1554,
+   "update_seconds": 0.66,
+   "exact_raw": 0.3481,
+   "exact_normalized": 0.5959,
+   "graph_raw": 0.3481,
+   "graph_normalized": 0.5959,
+   "graph_reach_old_space_relevant": 0.7615,
+   "mixed_list_split": {
+    "mean_new_space_hits": 25.0,
+    "mean_old_space_hits": 17.56,
+    "mean_total_candidates": 42.56,
+    "target_hits_per_operator": 25
+   },
+   "latency_p50_ms": {
+    "exact_raw": 2.2,
+    "exact_norm": 1.9,
+    "graph_raw": 2.0,
+    "graph_norm": 1.6
+   }
+  },
+  {
+   "fraction": 0.4,
+   "migrated_docs": 2073,
+   "update_seconds": 0.64,
+   "exact_raw": 0.3658,
+   "exact_normalized": 0.6077,
+   "graph_raw": 0.3658,
+   "graph_normalized": 0.6077,
+   "graph_reach_old_space_relevant": 0.8049,
+   "mixed_list_split": {
+    "mean_new_space_hits": 25.0,
+    "mean_old_space_hits": 15.17,
+    "mean_total_candidates": 40.17,
+    "target_hits_per_operator": 25
+   },
+   "latency_p50_ms": {
+    "exact_raw": 2.1,
+    "exact_norm": 2.1,
+    "graph_raw": 1.8,
+    "graph_norm": 1.8
+   }
+  },
+  {
+   "fraction": 0.5,
+   "migrated_docs": 2591,
+   "update_seconds": 0.69,
+   "exact_raw": 0.41,
+   "exact_normalized": 0.6047,
+   "graph_raw": 0.41,
+   "graph_normalized": 0.6047,
+   "graph_reach_old_space_relevant": 0.8035,
+   "mixed_list_split": {
+    "mean_new_space_hits": 25.0,
+    "mean_old_space_hits": 12.68,
+    "mean_total_candidates": 37.68,
+    "target_hits_per_operator": 25
+   },
+   "latency_p50_ms": {
+    "exact_raw": 2.0,
+    "exact_norm": 1.9,
+    "graph_raw": 1.9,
+    "graph_norm": 1.9
+   }
+  },
+  {
+   "fraction": 0.6,
+   "migrated_docs": 3109,
+   "update_seconds": 0.8,
+   "exact_raw": 0.4631,
+   "exact_normalized": 0.6224,
+   "graph_raw": 0.4602,
+   "graph_normalized": 0.6195,
+   "graph_reach_old_space_relevant": 0.8333,
+   "mixed_list_split": {
+    "mean_new_space_hits": 25.0,
+    "mean_old_space_hits": 10.16,
+    "mean_total_candidates": 35.16,
+    "target_hits_per_operator": 25
+   },
+   "latency_p50_ms": {
+    "exact_raw": 2.1,
+    "exact_norm": 2.3,
+    "graph_raw": 1.8,
+    "graph_norm": 2.1
+   }
+  },
+  {
+   "fraction": 0.7,
+   "migrated_docs": 3628,
+   "update_seconds": 0.74,
+   "exact_raw": 0.5133,
+   "exact_normalized": 0.646,
+   "graph_raw": 0.5103,
+   "graph_normalized": 0.6431,
+   "graph_reach_old_space_relevant": 0.8878,
+   "mixed_list_split": {
+    "mean_new_space_hits": 25.0,
+    "mean_old_space_hits": 7.6,
+    "mean_total_candidates": 32.6,
+    "target_hits_per_operator": 25
+   },
+   "latency_p50_ms": {
+    "exact_raw": 2.1,
+    "exact_norm": 2.0,
+    "graph_raw": 2.0,
+    "graph_norm": 1.9
+   }
+  },
+  {
+   "fraction": 0.8,
+   "migrated_docs": 4146,
+   "update_seconds": 0.95,
+   "exact_raw": 0.5575,
+   "exact_normalized": 0.6519,
+   "graph_raw": 0.5575,
+   "graph_normalized": 0.6519,
+   "graph_reach_old_space_relevant": 0.9,
+   "mixed_list_split": {
+    "mean_new_space_hits": 25.0,
+    "mean_old_space_hits": 5.24,
+    "mean_total_candidates": 30.24,
+    "target_hits_per_operator": 25
+   },
+   "latency_p50_ms": {
+    "exact_raw": 2.3,
+    "exact_norm": 2.3,
+    "graph_raw": 2.0,
+    "graph_norm": 2.1
+   }
+  },
+  {
+   "fraction": 0.9,
+   "migrated_docs": 4664,
+   "update_seconds": 0.73,
+   "exact_raw": 0.5959,
+   "exact_normalized": 0.6342,
+   "graph_raw": 0.5959,
+   "graph_normalized": 0.6342,
+   "graph_reach_old_space_relevant": 0.9429,
+   "mixed_list_split": {
+    "mean_new_space_hits": 25.0,
+    "mean_old_space_hits": 2.4,
+    "mean_total_candidates": 27.4,
+    "target_hits_per_operator": 25
+   },
+   "latency_p50_ms": {
+    "exact_raw": 2.1,
+    "exact_norm": 2.2,
+    "graph_raw": 2.1,
+    "graph_norm": 2.0
+   }
+  },
+  {
+   "fraction": 1.0,
+   "migrated_docs": 5183,
+   "update_seconds": 0.76,
+   "exact_raw": 0.646,
+   "exact_normalized": 0.646,
+   "graph_raw": 0.649,
+   "graph_normalized": 0.649,
+   "graph_reach_old_space_relevant": null,
+   "mixed_list_split": {
+    "mean_new_space_hits": 25.0,
+    "mean_old_space_hits": 0.0,
+    "mean_total_candidates": 25.0,
+    "target_hits_per_operator": 25
+   },
+   "latency_p50_ms": {
+    "exact_raw": 2.1,
+    "exact_norm": 2.1,
+    "graph_raw": 1.9,
+    "graph_norm": 1.7
+   }
+  }
+ ]
+}

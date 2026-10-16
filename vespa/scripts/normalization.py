@@ -34,16 +34,23 @@ import vespa_eval as V
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CACHE = os.environ.get("EMB_CACHE", os.path.join(HERE, "..", "..", "scripts"))
-OUT = os.path.join(HERE, "..", "results", "step9_normalization.json")
+TAG = os.environ.get("OUT_TAG", "")
+OUT = os.path.join(HERE, "..", "results", f"step9_normalization{TAG}.json")
 JSONL = os.path.join(HERE, "norm_slice.jsonl")
 ENDPOINT = V.endpoint()
 SEED = int(os.environ.get("SEED", "0"))
-FRACTIONS = [0.0, 0.1, 0.2, 0.3]
+# All eleven fractions by default, so the curve covers the whole migration rather
+# than the first third. FRACTIONS=0,0.1,0.2,0.3 reproduces the shorter early run.
+FRACTIONS = [round(float(x), 2) for x in
+             os.environ.get("FRACTIONS", "0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0").split(",")]
 EXPLORE = 40
-# Candidate budget per operator. Normalization can only reorder what came back,
-# so with TARGET_HITS equal to k it cannot change recall@10 at all. stage 3 reranks
-# ef_search 50 candidates, so 50 is the comparable setting.
-TARGET = int(os.environ.get("TARGET_HITS", "10"))
+# Candidate budget PER OPERATOR, and the mixed query has two of them, so the total
+# candidate list here is about twice TARGET. That matters when comparing against
+# the single-operator in-place run, which gets TARGET candidates in total: see
+# inplace_vs_dualfield.py and the budget-matched controls in ../README.md.
+# Normalization can only reorder what came back, so with TARGET equal to k it
+# cannot change recall@10 at all. stage 3 reranks ef_search 50 candidates.
+TARGET = int(os.environ.get("TARGET_HITS", "50"))
 # targetHits is what widens an ANN candidate list, so reach is measured with the
 # same budget the old-space operator gets inside the mixed query.
 
@@ -164,7 +171,9 @@ def space_split(mask):
         old_n += sum(1 for h in ch if h["fields"].get("space") == 0)
         lists += 1
     return {"mean_new_space_hits": round(new_n / lists, 2),
-            "mean_old_space_hits": round(old_n / lists, 2)} if lists else None
+            "mean_old_space_hits": round(old_n / lists, 2),
+            "mean_total_candidates": round((new_n + old_n) / lists, 2),
+            "target_hits_per_operator": TARGET} if lists else None
 
 
 print(f"{N} documents, seed {SEED}, explore {EXPLORE}, targetHits {TARGET}, endpoint {ENDPOINT}", flush=True)
@@ -196,7 +205,8 @@ for frac in FRACTIONS:
     runs.append(rec)
     print(f"  {frac:4.1f}  exact raw {raw_e:.4f} -> norm {nrm_e:.4f}    "
           f"graph raw {raw_g:.4f} -> norm {nrm_g:.4f}    reach {rch}"
-          f"    list {split['mean_new_space_hits']}n/{split['mean_old_space_hits']}o", flush=True)
+          f"    list {split['mean_new_space_hits']}n/{split['mean_old_space_hits']}o"
+          f" = {split['mean_total_candidates']}", flush=True)
 
 res = {"step": 9, "seed": SEED, "explore": EXPLORE, "target_hits": TARGET, "fractions": FRACTIONS,
        "endpoint": ENDPOINT,

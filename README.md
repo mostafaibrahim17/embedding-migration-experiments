@@ -29,13 +29,18 @@ ends.
 
 Two further results:
 
-- **Per-space score normalization repairs it in exact search but not on a graph.**
-  Exact search recovers 0.33 to 0.60. On an HNSW graph updated in place, the same fix
-  only reaches 0.38, because by 20% migrated the graph returns just 40% of each
-  query's relevant old-space documents, down from 79%. Normalization can only reorder
-  what the graph returned. Rebuilding the graph on the mix instead gives 0.39 and 42%,
-  so the protocol barely matters. Widening the search fourfold (ef_search 200) lifts
-  it to 0.48 and reach to 75%, against a 91% baseline at that width, still short.
+- **Per-space score normalization repairs it in exact search but not when retrieval
+  runs through a fixed-size candidate list.** Exact search over every document
+  recovers 0.33 to 0.60. On an HNSW graph updated in place, the same fix only reaches
+  0.38, because by 20% migrated the graph returns just 40% of each query's relevant
+  old-space documents, down from 79%. Normalization can only reorder what came back.
+  Rebuilding the graph on the mix instead gives 0.39 and 42%, so the protocol barely
+  matters. Widening the search fourfold (ef_search 200) lifts it to 0.48 and reach to
+  75%, against a 91% baseline at that width, still short. The approximate graph is
+  not the cause: the Vespa run in `vespa/` measures the same reach with exact search
+  at the same candidate budget and gets 0.475 against the graph's 0.442, so almost
+  all of the loss is migrated documents taking the candidate slots, which brute-force
+  retrieval into a list of the same size would do too.
 - **Switching queries last mirrors the problem rather than avoiding it.** The low
   point moves to 80–90% migrated and still sits below both ends.
 

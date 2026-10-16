@@ -12,8 +12,9 @@ resulting curve is directly comparable to exact_curves_minilm in
 relevance judgements and the metric are the same.
 
 It also records what the backfill costs: update throughput per increment against
-the 794 documents/second the initial load managed, and query latency measured
-while the index is half in one space and half in the other.
+the initial load's own throughput, which it reads back from step3_feed.json
+rather than carrying a copy, and query latency measured while the index is half
+in one space and half in the other.
 
     VESPA_ENDPOINT=http://127.0.0.1:8090 python3 backfill_and_measure.py
 """
@@ -93,10 +94,22 @@ for frac in FRACTIONS:
           f"   graph {graph['recall_at_10_pooled']:.4f}"
           f"   p50 {graph['latency_ms_p50']:.1f}ms", flush=True)
 
+def _initial_load():
+    """The initial load throughput, read back from step 3's own output rather
+    than typed in here. An earlier version of this file carried hardcoded
+    numbers that no longer matched the committed step3_feed.json, which is
+    exactly the kind of drift a reproducibility repo cannot afford."""
+    path = os.path.join(HERE, "..", "results", "step3_feed.json")
+    if not os.path.exists(path):
+        return {"note": "step3_feed.json not found; run feed_old_space.py"}
+    d = json.load(open(path))
+    return {k: d[k] for k in ("wall_seconds", "docs_per_second", "repeats",
+                              "docs_per_second_all_repeats") if k in d}
+
+
 res = {"step": "5+6", "seed": SEED, "explore": EXPLORE, "n_docs": N,
        "queries": len(q_ids), "fractions": FRACTIONS, "endpoint": ENDPOINT,
-       "initial_load_docs_per_second_cold": 793.9,
-       "initial_load_docs_per_second_warm": 1658.5,
+       "initial_load": _initial_load(),
        "runs": runs}
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 json.dump(res, open(OUT, "w"), indent=1)

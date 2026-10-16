@@ -26,13 +26,20 @@ import vespa_eval as V
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CACHE = os.environ.get("EMB_CACHE", os.path.join(HERE, "..", "..", "scripts"))
-OUT = os.path.join(HERE, "..", "results", "step9b_inplace_vs_dualfield.json")
+TAG = os.environ.get("OUT_TAG", "")
+OUT = os.path.join(HERE, "..", "results", f"step9b_inplace_vs_dualfield{TAG}.json")
 JSONL = os.path.join(HERE, "inplace_slice.jsonl")
 ENDPOINT = V.endpoint()
 SEED = int(os.environ.get("SEED", "0"))
-FRACTIONS = [0.0, 0.1, 0.2, 0.3]
+FRACTIONS = [round(float(x), 2) for x in
+             os.environ.get("FRACTIONS", "0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0").split(",")]
 EXPLORE = 40
-TARGET = int(os.environ.get("TARGET_HITS", "10"))   # candidates available to rerank
+# Candidate budget, and here there is ONE operator, so this is also the total
+# candidate list. The dual-field run in normalization.py has two operators and
+# therefore roughly twice its TARGET_HITS in total, which is a confound in any
+# comparison at equal TARGET_HITS. Run this at twice the dual-field setting to
+# compare at matched or better total budget.
+TARGET = int(os.environ.get("TARGET_HITS", "50"))
 
 meta = V.load_meta(HERE)
 doc_ids, doc_text, q_ids, relevant = meta["doc_ids"], meta["doc_text"], meta["q_ids"], meta["relevant"]
@@ -103,14 +110,36 @@ def stats_for(mask):
     return out
 
 
-def reach(mask):
-    """Share of relevant old-space documents in the single graph's candidates."""
+def candidates(target=None):
+    """Total candidates the single operator exposes, averaged over queries. One
+    graph and one operator, so this is the whole candidate list, and it is the
+    number to match against the dual-field run's two operators combined."""
+    target = target or TARGET
+    n = lists = 0
+    for i in range(len(q_ids)):
+        ch = ask(YQL, "inplace_cosine", i, 4 * target)
+        if ch:
+            n += len(ch)
+            lists += 1
+    return round(n / lists, 2) if lists else None
+
+
+def reach(mask, yql=None):
+    """Share of relevant old-space documents in the single operator's candidates.
+
+    Run against YQL this is the graph's reach. Run against YQL_EXACT it is the
+    reach of a perfect search given the same budget, which is the decomposition
+    that matters: exact search at targetHits 50 returns the true top 50 by score,
+    so whatever it misses was lost to slot competition alone, with no graph
+    involved. The gap between the two is what the graph itself costs.
+    """
+    yql = yql or YQL
     found = total = 0
     for i, qid in enumerate(q_ids):
         rel_old = {d for d in relevant[qid] if d in index_of and not mask[index_of[d]]}
         if not rel_old:
             continue
-        got = {h["fields"].get("doc_id") for h in ask(YQL, "inplace_cosine", i, TARGET)}
+        got = {h["fields"].get("doc_id") for h in ask(yql, "inplace_cosine", i, TARGET)}
         found += len(got & rel_old)
         total += len(rel_old)
     return round(found / total, 4) if total else None
@@ -134,11 +163,15 @@ for frac in FRACTIONS:
            "exact_normalized": recall(YQL_EXACT, "inplace_normalized", st),
            "graph_raw": recall(YQL, "inplace_cosine", None),
            "graph_normalized": recall(YQL, "inplace_normalized", st),
-           "graph_reach_old_space_relevant": reach(mask)}
+           "graph_reach_old_space_relevant": reach(mask),
+           "exact_reach_old_space_relevant": reach(mask, YQL_EXACT),
+           "mean_total_candidates": candidates(),
+           "target_hits_single_operator": TARGET}
     runs.append(rec)
     print(f"  {frac:4.1f}  exact raw {rec['exact_raw']:.4f} -> norm {rec['exact_normalized']:.4f}"
           f"    graph raw {rec['graph_raw']:.4f} -> norm {rec['graph_normalized']:.4f}"
-          f"    reach {rec['graph_reach_old_space_relevant']}", flush=True)
+          f"    reach graph {rec['graph_reach_old_space_relevant']}"
+          f" / exact {rec['exact_reach_old_space_relevant']}", flush=True)
 
 res = {"step": "9b", "seed": SEED, "explore": EXPLORE, "target_hits": TARGET, "fractions": FRACTIONS,
        "migration_style": "in place: one tensor field overwritten, one HNSW graph holding both spaces",

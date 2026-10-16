@@ -4,26 +4,38 @@
  "n_docs": 5183,
  "dim": 384,
  "jsonl_mb": 52.1,
- "wall_seconds": 2.4,
- "docs_per_second": 2172.8,
+ "wall_seconds": 3.9,
+ "docs_per_second": 1340.3,
+ "repeats": 3,
+ "wall_seconds_all_repeats": [
+  4.2,
+  2.5,
+  3.9
+ ],
+ "docs_per_second_all_repeats": [
+  1234.6,
+  2083.1,
+  1340.3
+ ],
+ "note": "docs_per_second is the last repeat. The spread across repeats is the honest range for this machine; the reported figure is not reproducible to the digit.",
  "feed_client_summary": {
   "feeder.operation.count": 5183,
-  "feeder.seconds": 2.348,
+  "feeder.seconds": 3.825,
   "feeder.ok.count": 5183,
-  "feeder.ok.rate": 2207.656,
+  "feeder.ok.rate": 1355.203,
   "feeder.error.count": 0,
   "feeder.inflight.count": 0,
   "http.request.count": 5183,
   "http.request.bytes": 24288386,
-  "http.request.MBps": 10.345,
+  "http.request.MBps": 6.351,
   "http.exception.count": 0,
   "http.response.count": 5183,
   "http.response.bytes": 473060,
-  "http.response.MBps": 0.201,
+  "http.response.MBps": 0.124,
   "http.response.error.count": 0,
-  "http.response.latency.millis.min": 13,
-  "http.response.latency.millis.avg": 25,
-  "http.response.latency.millis.max": 65,
+  "http.response.latency.millis.min": 7,
+  "http.response.latency.millis.avg": 24,
+  "http.response.latency.millis.max": 69,
   "http.response.code.counts": {
    "200": 5183
   }
