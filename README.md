@@ -158,7 +158,10 @@ Where the rest of the article's figures live:
   `distant_pair_exact`, `minilm_pair_hnsw_inplace`
 - the wider graph search: `stage7_ef_results.json` → `runs.ef50_*` and `runs.ef200_*`,
   each `A_inplace_update` and `B_rebuild_on_mix`, fractions 0% to 30% only
-- the cosine separation and top-10 share: `stage2_cosine_results.json`
+- the cosine separation, the top-10 share, and how far the two score distributions
+  actually overlap: `stage2_cosine_results.json` → `whole_corpus`, which records the
+  means, the standard deviations, and the share of old-space scores above the median
+  migrated score (0.246). The means alone suggest two separated groups; they are not.
 
 ## Caveats
 
@@ -189,4 +192,4 @@ Where the rest of the article's figures live:
 - A linear map between the two spaces was tried and is not reported, because it was
   scored on the same documents it was fitted on.
 - Neighbour overlap in `stage6_fiqa.py` is computed on a 3,000-document sample, not the
-  full corpus. The SciFact overlap figures the article quotes are over the full corpus.
+  full document set. The SciFact overlap figures the article quotes cover every document.

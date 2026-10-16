@@ -23,7 +23,10 @@
  ],
  "whole_corpus": {
   "mean_cosine_old_space": 0.08107434213161469,
-  "mean_cosine_new_space": 0.14629316329956055
+  "mean_cosine_new_space": 0.14629316329956055,
+  "std_cosine_old_space": 0.08831016719341278,
+  "std_cosine_new_space": 0.1204523965716362,
+  "share_old_space_above_median_new_space": 0.24578622419448196
  },
  "by_fraction": {
   "0.0": {

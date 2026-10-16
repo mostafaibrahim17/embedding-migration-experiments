@@ -61,11 +61,21 @@ q_new = embed(NEW, qtexts, "q_new")
 sims_old = q_new @ docs_old.T          # queries x docs, old-space documents
 sims_new = q_new @ docs_new.T          # queries x docs, new-space documents
 
+# How far apart the two groups really are. The means alone invite a picture of two
+# separated clusters, which is wrong: the distributions overlap heavily and
+# migrated documents win most top slots rather than all of them, which is why the
+# top-10 share below is 84% and 92% rather than 100%.
+share_old_above = float((sims_old > np.median(sims_new)).mean())
+
 res = {"n_docs": N, "n_queries": len(q_ids), "seeds": SEEDS, "fractions": FRACTIONS,
        "whole_corpus": {
            "mean_cosine_old_space": float(sims_old.mean()),
-           "mean_cosine_new_space": float(sims_new.mean())},
+           "mean_cosine_new_space": float(sims_new.mean()),
+           "std_cosine_old_space": float(sims_old.std()),
+           "std_cosine_new_space": float(sims_new.std()),
+           "share_old_space_above_median_new_space": share_old_above},
        "by_fraction": {}}
+print(f"  share of old-space scores above the median migrated score: {share_old_above:.4f}")
 print(f"\nWhole corpus, mean cosine to a new-model query:")
 print(f"  documents in the old space: {sims_old.mean():.3f}")
 print(f"  documents in the new space: {sims_new.mean():.3f}")

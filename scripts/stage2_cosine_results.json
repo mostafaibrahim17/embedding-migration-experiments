@@ -1,0 +1,88 @@
+{
+ "n_docs": 5183,
+ "n_queries": 300,
+ "seeds": [
+  0,
+  1,
+  2,
+  3,
+  4
+ ],
+ "fractions": [
+  0.0,
+  0.1,
+  0.2,
+  0.3,
+  0.4,
+  0.5,
+  0.6,
+  0.7,
+  0.8,
+  0.9,
+  1.0
+ ],
+ "whole_corpus": {
+  "mean_cosine_old_space": 0.08107434213161469,
+  "mean_cosine_new_space": 0.14629316329956055,
+  "std_cosine_old_space": 0.08831016719341278,
+  "std_cosine_new_space": 0.1204523965716362,
+  "share_old_space_above_median_new_space": 0.24578622419448196
+ },
+ "by_fraction": {
+  "0.0": {
+   "mean_cosine_migrated": null,
+   "mean_cosine_unmigrated": 0.08107434213161469,
+   "top10_share_migrated": 0.0
+  },
+  "0.1": {
+   "mean_cosine_migrated": 0.14600713849067687,
+   "mean_cosine_unmigrated": 0.08105577826499939,
+   "top10_share_migrated": 0.8438000000000001
+  },
+  "0.2": {
+   "mean_cosine_migrated": 0.14688679277896882,
+   "mean_cosine_unmigrated": 0.08109920024871826,
+   "top10_share_migrated": 0.9244
+  },
+  "0.3": {
+   "mean_cosine_migrated": 0.1469167947769165,
+   "mean_cosine_unmigrated": 0.0811120793223381,
+   "top10_share_migrated": 0.9572666666666667
+  },
+  "0.4": {
+   "mean_cosine_migrated": 0.14651617407798767,
+   "mean_cosine_unmigrated": 0.08126347661018371,
+   "top10_share_migrated": 0.9736
+  },
+  "0.5": {
+   "mean_cosine_migrated": 0.14656809568405152,
+   "mean_cosine_unmigrated": 0.0811602771282196,
+   "top10_share_migrated": 0.9829333333333334
+  },
+  "0.6": {
+   "mean_cosine_migrated": 0.14642025232315065,
+   "mean_cosine_unmigrated": 0.08118192255496978,
+   "top10_share_migrated": 0.9882
+  },
+  "0.7": {
+   "mean_cosine_migrated": 0.1462763488292694,
+   "mean_cosine_unmigrated": 0.08113030940294266,
+   "top10_share_migrated": 0.9926666666666666
+  },
+  "0.8": {
+   "mean_cosine_migrated": 0.14626657366752624,
+   "mean_cosine_unmigrated": 0.08095787167549133,
+   "top10_share_migrated": 0.9955333333333334
+  },
+  "0.9": {
+   "mean_cosine_migrated": 0.1462815523147583,
+   "mean_cosine_unmigrated": 0.08066517859697342,
+   "top10_share_migrated": 0.998
+  },
+  "1.0": {
+   "mean_cosine_migrated": 0.14629317820072174,
+   "mean_cosine_unmigrated": null,
+   "top10_share_migrated": 1.0
+  }
+ }
+}
