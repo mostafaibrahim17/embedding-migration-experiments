@@ -304,9 +304,10 @@ migrated, with each operator given `targetHits` 50 and
 50 but searches wider than its ef_search 50 (see the caveat at the end of this
 section),
 the graph gets 0.5870, which is exactly what exact search gets. Reach of relevant
-old-space documents does not fall over the migration at all. It rises, because
-the old space keeps a fixed candidate budget while the number of documents left
-in it shrinks (`results/step9_normalization.json`):
+old-space documents does not fall over the migration at all. It rises as the old
+space empties, for a reason that took two more runs to pin down and is not the
+one written here first; see "Nothing is reserved" below
+(`results/step9_normalization.json`):
 
 | Migrated | 0% | 10% | 20% | 30% | 40% | 50% | 60% | 70% | 80% | 90% |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -487,10 +488,10 @@ A caveat that belongs with this result rather than at the end. On 5,183
 documents, Vespa's graph at `targetHits` 50 plus `exploreAdditionalHits` 40 is
 effectively exact: `graph_raw` equals `exact_raw` to four decimals at ten of the
 eleven fractions, and at the eleventh (0% migrated) the graph is marginally
-*higher*, 0.5929 against 0.5900. The dual-field numbers therefore show what reserved
-candidate budgets do when the graph itself is barely lossy. On an index large
-enough for ANN to lose real recall, the dual-field arrangement should still
-reserve the old space a budget, but how much of the recovery survives is not
+*higher*, 0.5929 against 0.5900. The dual-field numbers therefore show what a
+second candidate list does when the graph itself is barely lossy. On an index
+large enough for ANN to lose real recall, a second field should still give the
+old space a list of its own, but how much of the recovery survives is not
 something 5,183 documents can tell you.
 
 ### One thing worth knowing before tuning an ANN query
