@@ -1,15 +1,19 @@
 """Step 9b: is the second field what makes normalization work on a graph?
 
 Step 9 found that per-space normalization repairs the low point on Vespa's graph,
-recovering 0.3156 to 0.5929 at 20% migrated, where the simulation's graph only
+recovering 0.3156 to 0.5870 at 20% migrated, where the simulation's graph only
 reached 0.3746. The difference is not that Vespa normalizes better. It is that a
-mixed state in Vespa is necessarily two fields and therefore two HNSW graphs,
-each nearestNeighbor operator holding its own candidate budget, so documents in
-the new space cannot crowd documents in the old space out of retrieval.
+dual-write migration in Vespa puts the two spaces in two fields, which means two
+HNSW graphs and therefore two candidate lists rather than one.
 
 If that is the cause, migrating the other way should reproduce the simulation's
 failure in Vespa: overwrite the single vector field in place, so one graph holds
 vectors from both models, and normalization should stop working.
+
+This script is one half of the control. It varies the field and the operator
+count together, so on its own it cannot say which does the work;
+inplace_two_operators.py holds the field mixed and adds the second operator, and
+finds that the operator buys nothing and the field buys everything.
 
 This runs that migration. emb_old is overwritten with new-model vectors for the
 documents that have migrated, which is what an in-place model change looks like

@@ -33,7 +33,9 @@ Two further results:
   runs through a fixed-size candidate list.** Exact search over every document
   recovers 0.33 to 0.60. On an HNSW graph updated in place, the same fix only reaches
   0.38, because by 20% migrated the graph returns just 40% of each query's relevant
-  old-space documents, down from 79%. Normalization can only reorder what came back.
+  old-space documents, down from 79%, a figure that is a per-query mean here and
+  pooled in the Vespa runs, so the two sit within a few hundredths of each other
+  rather than being the same estimator. Normalization can only reorder what came back.
   Rebuilding the graph on the mix instead gives 0.39 and 42%, so the protocol barely
   matters. Widening the search fourfold (ef_search 200) lifts it to 0.48 and reach to
   75%, against a 91% baseline at that width, still short. The approximate graph is
@@ -42,7 +44,8 @@ Two further results:
   all of the loss is migrated documents taking the candidate slots, which brute-force
   retrieval into a list of the same size would do too.
 - **Switching queries last mirrors the problem rather than avoiding it.** The low
-  point moves to 80–90% migrated and still sits below both ends.
+  point moves to 80% migrated for the close pair and 90% for the distant one, in
+  all five orders either way, and still sits below both ends.
 
 ## Layout
 
@@ -59,6 +62,10 @@ results/     raw JSON written by each run
 | `stage6_fiqa.py` | Everything above repeated on FiQA, 57,638 documents | `fiqa_results.json` |
 | `stage7_ef_search.py` | Does a wider graph search (ef_search 200) recover more than ef 50? | `stage7_ef_results.json` |
 
+The Vespa half of the repo is in `vespa/`, with its own README. It runs the same
+migration in a real engine and holds the controls that separate what a second
+embedding field does from what a wider candidate list does.
+
 ## Setup
 
 ```bash
@@ -72,7 +79,8 @@ toolchain. On a bare container, install build tools first.
 ## Running
 
 Run stage 3 first. It embeds the documents and caches them as `emb_*.npy` next to the
-scripts. Stages 5 and 7 need that cache and stop with a clear message if it is missing;
+scripts. That cache is gitignored, so a clean checkout embeds all of it, including the
+distant-pair array the Vespa half's `prepare_embeddings.py` does not write. Stages 5 and 7 need that cache and stop with a clear message if it is missing;
 stage 2 re-embeds on its own if it has to, which costs a few minutes. Set
 `EMB_CACHE=/some/path` to keep the cache elsewhere.
 
@@ -171,11 +179,13 @@ Where the rest of the article's figures live:
   code on identical embeddings, per-seed recall differs by up to 0.006 and reach by up
   to 0.016. One SciFact document is 1/339 = 0.003 of pooled recall, so that is a run-to-run
   gap of two documents.
-- `ef_search` was picked on the evaluation queries themselves: the scripts take the
-  first width whose fully migrated graph reaches 98% of exact recall on the same 300
-  SciFact or 648 FiQA queries the results are scored on. That tunes the graph in the
-  index's favour, which only makes the low point harder to explain away, but it is not
-  a held-out choice.
+- `ef_search` was picked on the evaluation queries themselves. Stages 3 and 6 take
+  the first width whose fully migrated graph reaches 98% of exact recall on the same
+  300 SciFact or 648 FiQA queries the results are scored on, which lands on 50. That
+  tunes the graph in the index's favour, which only makes the low point harder to
+  explain away, but it is not a held-out choice. Stages 5 and 7 then hardcode what
+  that search selected, 50 in stage 5 and 50 and 200 in stage 7, rather than
+  re-tuning.
 - A linear map between the two spaces was tried and is not reported, because it was
   scored on the same documents it was fitted on.
 - Neighbour overlap in `stage6_fiqa.py` is computed on a 3,000-document sample, not the

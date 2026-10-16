@@ -1,0 +1,124 @@
+{
+ "step": "9c",
+ "seed": 0,
+ "explore": 40,
+ "target_hits": 50,
+ "fractions": [
+  0.0,
+  0.1,
+  0.2,
+  0.3,
+  0.4,
+  0.5
+ ],
+ "endpoint": "http://127.0.0.1:8090",
+ "question": "two operators over ONE mixed field: does giving the old space its own operator and targetHits restore its reach, or does protection require a field that holds only old-space vectors?",
+ "compare_with": {
+  "two fields, two operators": "results/step9_normalization.json",
+  "one field, one operator": "results/step9b_inplace_vs_dualfield.json"
+ },
+ "runs": [
+  {
+   "fraction": 0.0,
+   "migrated_docs": 0,
+   "overwrite_seconds": 0.0,
+   "exact_raw": 0.59,
+   "exact_normalized": 0.59,
+   "graph_raw": 0.5929,
+   "graph_normalized": 0.5929,
+   "graph_reach_old_space_relevant": 0.8112,
+   "exact_reach_old_space_relevant": 0.8053,
+   "mixed_list_split": {
+    "mean_new_space_hits": 0.0,
+    "mean_old_space_hits": 50.0,
+    "mean_total_candidates": 50.0,
+    "target_hits_per_operator": 50
+   }
+  },
+  {
+   "fraction": 0.1,
+   "migrated_docs": 518,
+   "overwrite_seconds": 0.81,
+   "exact_raw": 0.3658,
+   "exact_normalized": 0.6047,
+   "graph_raw": 0.3658,
+   "graph_normalized": 0.5546,
+   "graph_reach_old_space_relevant": 0.8033,
+   "exact_reach_old_space_relevant": 0.8066,
+   "mixed_list_split": {
+    "mean_new_space_hits": 36.24,
+    "mean_old_space_hits": 13.76,
+    "mean_total_candidates": 50.0,
+    "target_hits_per_operator": 50
+   }
+  },
+  {
+   "fraction": 0.2,
+   "migrated_docs": 1036,
+   "overwrite_seconds": 0.65,
+   "exact_raw": 0.3156,
+   "exact_normalized": 0.587,
+   "graph_raw": 0.3156,
+   "graph_normalized": 0.4838,
+   "graph_reach_old_space_relevant": 0.8043,
+   "exact_reach_old_space_relevant": 0.8043,
+   "mixed_list_split": {
+    "mean_new_space_hits": 43.46,
+    "mean_old_space_hits": 6.54,
+    "mean_total_candidates": 50.0,
+    "target_hits_per_operator": 50
+   }
+  },
+  {
+   "fraction": 0.3,
+   "migrated_docs": 1554,
+   "overwrite_seconds": 0.73,
+   "exact_raw": 0.3481,
+   "exact_normalized": 0.5959,
+   "graph_raw": 0.3392,
+   "graph_normalized": 0.472,
+   "graph_reach_old_space_relevant": 0.8285,
+   "exact_reach_old_space_relevant": 0.8243,
+   "mixed_list_split": {
+    "mean_new_space_hits": 46.01,
+    "mean_old_space_hits": 3.99,
+    "mean_total_candidates": 50.0,
+    "target_hits_per_operator": 50
+   }
+  },
+  {
+   "fraction": 0.4,
+   "migrated_docs": 2073,
+   "overwrite_seconds": 0.88,
+   "exact_raw": 0.3658,
+   "exact_normalized": 0.6077,
+   "graph_raw": 0.3599,
+   "graph_normalized": 0.469,
+   "graph_reach_old_space_relevant": 0.8537,
+   "exact_reach_old_space_relevant": 0.8585,
+   "mixed_list_split": {
+    "mean_new_space_hits": 47.52,
+    "mean_old_space_hits": 2.48,
+    "mean_total_candidates": 50.0,
+    "target_hits_per_operator": 50
+   }
+  },
+  {
+   "fraction": 0.5,
+   "migrated_docs": 2591,
+   "overwrite_seconds": 0.8,
+   "exact_raw": 0.41,
+   "exact_normalized": 0.6047,
+   "graph_raw": 0.4041,
+   "graph_normalized": 0.4985,
+   "graph_reach_old_space_relevant": 0.8555,
+   "exact_reach_old_space_relevant": 0.8613,
+   "mixed_list_split": {
+    "mean_new_space_hits": 48.34,
+    "mean_old_space_hits": 1.66,
+    "mean_total_candidates": 50.0,
+    "target_hits_per_operator": 50
+   }
+  }
+ ]
+}

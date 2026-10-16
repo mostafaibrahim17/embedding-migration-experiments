@@ -21,7 +21,7 @@ comparable. `distance-metric` is `prenormalized-angular` because the embedder
 returns unit vectors. An `int` attribute, `space`, records which model's vector a
 document is currently served from.
 
-Three rank profiles, all deployed at once:
+Seven rank profiles, all deployed at once:
 
 | Profile | What it scores | When it is used |
 |---|---|---|
@@ -57,7 +57,7 @@ Verified on Vespa **8.763.13**, Vespa CLI 8.699.8, Docker 29.2.0 on macOS
 
 ```bash
 docker run --detach --name vespa --hostname vespa-container \
-  --publish 8080:8080 --publish 19071:19071 vespaengine/vespa:8.763.13
+  --publish 8090:8080 --publish 19071:19071 vespaengine/vespa:8.763.13
 
 vespa config set target local
 vespa deploy --wait 300 ./app
@@ -120,19 +120,19 @@ increments of 10% through partial updates, following the same migration order
 stage 3 uses for seed 0, with the 300 new-model queries asked against the mixed
 index after each increment. `results/step5_backfill.json`:
 
-| Migrated | Vespa exact | stage 3 seed 0 | Vespa graph | p50 latency |
-|---|---|---|---|---|
-| 0% | 0.5900 | 0.5900 | 0.5900 | 2.3 ms |
-| 10% | 0.3658 | 0.3658 | 0.3658 | 2.5 ms |
-| 20% | **0.3156** | **0.3156** | **0.3156** | 2.3 ms |
-| 30% | 0.3481 | 0.3481 | 0.3481 | 2.4 ms |
-| 40% | 0.3658 | 0.3658 | 0.3658 | 2.5 ms |
-| 50% | 0.4100 | 0.4100 | 0.4100 | 2.6 ms |
-| 60% | 0.4631 | 0.4631 | 0.4572 | 2.5 ms |
-| 70% | 0.5133 | 0.5133 | 0.5074 | 2.5 ms |
-| 80% | 0.5575 | 0.5575 | 0.5575 | 2.3 ms |
-| 90% | 0.5959 | 0.5959 | 0.5959 | 2.2 ms |
-| 100% | 0.6460 | 0.6460 | 0.6490 | 2.5 ms |
+| Migrated | Vespa exact | stage 3 seed 0 | Vespa graph | graph p50 | exact p50 |
+|---|---|---|---|---|---|
+| 0% | 0.5900 | 0.5900 | 0.5900 | 2.2 ms | 2.4 ms |
+| 10% | 0.3658 | 0.3658 | 0.3658 | 2.3 ms | 2.3 ms |
+| 20% | **0.3156** | **0.3156** | **0.3156** | 2.3 ms | 2.4 ms |
+| 30% | 0.3481 | 0.3481 | 0.3481 | 2.4 ms | 2.5 ms |
+| 40% | 0.3658 | 0.3658 | 0.3658 | 2.0 ms | 2.6 ms |
+| 50% | 0.4100 | 0.4100 | 0.4100 | 2.3 ms | 2.5 ms |
+| 60% | 0.4631 | 0.4631 | 0.4572 | 2.5 ms | 2.7 ms |
+| 70% | 0.5133 | 0.5133 | 0.5074 | 2.5 ms | 2.7 ms |
+| 80% | 0.5575 | 0.5575 | 0.5575 | 2.3 ms | 2.5 ms |
+| 90% | 0.5959 | 0.5959 | 0.5959 | 2.6 ms | 2.3 ms |
+| 100% | 0.6460 | 0.6460 | 0.6490 | 2.3 ms | 2.2 ms |
 
 Every fraction agrees with the simulation to four decimals. Recall bottoms out at
 0.3156 with a fifth of the documents moved, against 0.5900 before the backfill
@@ -140,8 +140,8 @@ started and 0.6460 when it finished: below both ends, in a real engine, on the
 same data.
 
 Nothing looked wrong from the outside while this happened. No query returned an
-error, none returned zero hits, and p50 latency stayed between 2.2 and 2.6 ms at
-every fraction, including the worst one. A mixed index serves fast and answers
+error, none returned zero hits, and graph p50 latency stayed between 2.0 and
+2.6 ms at every fraction, including the worst one. A mixed index serves fast and answers
 everything. It just answers worse.
 
 **Step 5b, what the backfill costs.** Five write shapes, each one batch of all
@@ -149,17 +149,23 @@ everything. It just answers worse.
 
 | Write shape | Throughput | Payload | Document store growth | Per document |
 |---|---|---|---|---|
-| full document PUT | 1780/s | 52.1 MB | **+21.38 MB** | +4,125 B |
-| assign `emb_new` + `space` | 1254/s | 44.3 MB | +0.00 MB | +0.8 B |
-| assign `space` only | 953/s | 0.4 MB | +0.00 MB | +0.8 B |
-| assign `text`, same value | 801/s | 8.2 MB | **+21.31 MB** | +4,111 B |
-| assign `emb_new` again | 1246/s | 44.3 MB | +0.00 MB | +0.8 B |
+| full document PUT | 1780/s | 52.1 MB | **+21,379,904 B** | +4,125 B |
+| assign `emb_new` + `space` | 1254/s | 44.3 MB | +4,120 B | at the floor |
+| assign `space` only | 953/s | 0.4 MB | +4,120 B | at the floor |
+| assign `text`, same value | 801/s | 8.2 MB | **+21,306,128 B** | +4,111 B |
+| assign `emb_new` again | 1246/s | 44.3 MB | +4,120 B | at the floor |
 
 **Updating an HNSW-indexed tensor attribute does not rewrite the document
-store.** 0.8 bytes per document is index bookkeeping; the store does not grow,
-whether the vector is being inserted into the second graph for the first time or
-replaced. Assigning the indexed `text` field the value it already held rewrites
-4,111 bytes per document, within 0.4% of what a full PUT of the same document
+store.** Each of the three attribute shapes moves it by exactly 4,120 bytes,
+which is one 4 KiB `.dat` page plus a few dozen bytes of `.idx`, and the gap
+between one run's "after" and the next run's "before" is the same magnitude, so
+4 KiB is this instrument's floor rather than a measurement of anything. Dividing
+it by 5,183 documents would produce a per-document figure out of noise, so the
+right statement is no measurable growth, whether the vector is being inserted
+into the second graph for the first time or replaced.
+
+Assigning the indexed `text` field the value it already held rewrites 4,111 bytes
+per document, within 0.4% of what a full PUT of the same document
 writes, so an indexed-field update really does rewrite the whole document and not
 just the field. That is the distinction Vespa's documentation draws between
 attribute and index fields, and the answer to the question it leaves open, which
@@ -229,7 +235,8 @@ to the new space, 2.7 ms back, no deploy and no restart.
 
 Had the profile not been deployed in advance, adding one took 0.7 s for
 `vespa deploy` to return and about 1.0 s more before a query could use it, with
-queries served throughout and none failing. So pre-deploying both profiles turns
+two queries served in the gap and neither failing, which is too few to call it
+uninterrupted serving. So pre-deploying both profiles turns
 a roughly two-second change into a three-millisecond one. That is a real
 advantage and a small one: the honest version is that on a single node the deploy
 route is also cheap and does not drop traffic. The reason to pre-deploy is that
@@ -288,7 +295,10 @@ normalize. The statistics come from every document in each space, the same oracl
 the simulation's exact normalization uses.
 
 With two fields, normalization recovers the low point completely. At 20%
-migrated, with each operator given 50 candidates to match stage 3's ef_search 50,
+migrated, with each operator given `targetHits` 50 and
+`hnsw.exploreAdditionalHits` 40, which matches stage 3's returned list length of
+50 but searches wider than its ef_search 50 (see the caveat at the end of this
+section),
 the graph gets 0.5870, which is exactly what exact search gets. Reach of relevant
 old-space documents does not fall over the migration at all. It rises, because
 the old space keeps a fixed candidate budget while the number of documents left
@@ -371,24 +381,88 @@ wins, 0.5900 against 0.4808. Two fields at 45 candidates beat one field at 100.
 Budget does account for part of what the original comparison showed. Doubling the
 in-place budget from 50 to 100 lifts normalized recall from 0.4808 to 0.5516,
 which is most of the way to the dual-field result, so roughly two thirds of the
-gap as first reported was candidate width rather than structure. What is left
-after the control is not a smaller version of the same claim, though, it is a
-sharper one. It is not the *number* of candidates that protects the old space, it
-is that the old space has a budget of its own that migrated documents cannot
-spend. A shared list of 100 loses more relevant old-space documents than a
-reserved list of 20, because in a shared list the new space wins slots on raw
-score, which is the same crowding-out that puts the low point there in the first
-place.
+gap as first reported was candidate width rather than structure.
 
-That is also why the alternative explanation does not fit. If Vespa's graph were
-simply better than hnswlib's, the in-place run in Vespa would not collapse — and
-it collapses to 0.442 reach at 20% migrated, close to the simulation's 0.399.
+### Nothing is reserved, which the second version of this explanation got wrong
+
+The explanation first written here was that each operator holds a candidate
+budget of its own, so migrated documents cannot spend the old space's. That is
+also wrong, and the data refuting it was already committed in this repo.
+`mixed_list_split.mean_old_space_hits` in `results/step9_normalization.json` is
+`targetHits × (1 − migrated)` at every fraction:
+
+| Migrated | 0% | 10% | 20% | 30% | 40% | 50% | 60% | 70% | 80% | 90% |
+|---|---|---|---|---|---|---|---|---|---|---|
+| old-space documents returned | 50.0 | 45.17 | 40.0 | 35.25 | 30.52 | 25.48 | 20.4 | 15.26 | 10.54 | 5.01 |
+
+The `_t25` run reproduces the same line at 25. The old-space operator retrieves
+`targetHits` candidates from the `emb_old` graph, which holds a vector for every
+document including the migrated ones, and then loses the migrated ones to the
+`and space = 0` filter. Vespa is post-filtering here, so migrated documents *do*
+spend that operator's budget, in exact proportion to their share. Nothing is
+reserved and the budget is not fixed.
+
+### So is it the second field or the second operator? (step 9c)
+
+Those two had never been separated, because step 9 changes both at once. So
+`inplace_two_operators.py` runs the in-place mix — one field, identical to step
+9b — but queries it with **two** operators over that one field, each filtered to
+a space:
+
+```
+({targetHits:50}nearestNeighbor(emb_old, q) and space = 1) or
+({targetHits:50}nearestNeighbor(emb_old, q) and space = 0)
+```
+
+That gives the old space an operator and a `targetHits` of its own while leaving
+the field mixed. At 20% migrated (`results/step9c_two_operators_one_field.json`
+and `..._t100.json`):
+
+| Arrangement | `targetHits` | Candidates scored | Old-space slots in them | graph normalized |
+|---|---|---|---|---|
+| **two fields**, two operators | 50 each | **90.0** | **40.0** | **0.5870** |
+| one field, two operators | 50 each | 50.0 | 6.5 | 0.4838 |
+| one field, one operator | 50 | 50.0 | — | 0.4808 |
+| one field, two operators | 100 each | 100.0 | 18.0 | 0.5516 |
+| one field, one operator | 100 | 100.0 | — | 0.5516 |
+
+**The second operator buys nothing. The second field buys everything.** Two
+operators over one field return one list of 50, not two — the number is exactly
+50.0 at every fraction — because both operators search the same graph, and the
+new space takes 43.46 of those 50 slots on raw score. Recovery lands at 0.4838,
+which is the single-operator number (0.4808) to within run-to-run noise. At
+`targetHits` 100 the two arrangements are identical to four decimals, 0.5516
+both ways.
+
+Two *fields* are two graphs, and two graphs are genuinely two candidate lists,
+90 documents against 50. So what the second field buys is a second list, whose
+ranking contains only old-space vectors and therefore has no cross-space score
+competition in it. Migrated documents still shrink that list in proportion to
+their number, as the post-filter table above shows, but they cannot outscore
+their way into it. That is the difference, and it is now separated from both
+candidate width and operator count.
+
+### A caveat about how reach is measured here
+
+The reach column above and in the earlier tables is measured by a **standalone
+single-operator query**, not by the mixed query whose recall sits beside it. Step
+9c shows why that matters: one field with two operators reports reach 0.804, as
+high as the dual-field case, while recovering only 0.4838, because the
+old-space documents are reachable by that operator *alone* and still never make
+the combined query's 50-slot list. Reach measured this way is an upper bound on
+what the scored query sees. **The quantity that actually predicts recovery is
+the old-space share of the scored candidate list** — 40.0 against 6.5 against
+18.0 in the table above — not the standalone probe.
+
+That also disposes of the alternative explanation for step 9b. If Vespa's graph
+were simply better than hnswlib's, the in-place run in Vespa would not collapse,
+and it collapses to 0.442 reach at 20% migrated, close to the simulation's 0.399.
 
 So the article's warning holds for in-place model changes and not for dual-write,
 and the recommendation it already makes for Vespa turns out to be protected by a
 mechanism it does not mention. The second embedding field is not only a way to
-keep both versions queryable. It is what keeps the old space reachable while the
-index is mixed.
+keep both versions queryable. It is what keeps the old space in the candidate
+list at all while the index is mixed.
 
 One practitioner note from getting this wrong first. With `targetHits` equal to
 the number of hits returned, normalization changed nothing whatsoever in the
@@ -402,12 +476,14 @@ TARGET_HITS=50  python3 normalization.py            # two fields, the main run
 TARGET_HITS=25  OUT_TAG=_t25  python3 normalization.py    # matched total budget
 TARGET_HITS=50  python3 inplace_vs_dualfield.py     # one field, same per operator
 TARGET_HITS=100 OUT_TAG=_t100 python3 inplace_vs_dualfield.py   # matched total
+TARGET_HITS=50  python3 inplace_two_operators.py    # one field, two operators
 ```
 
 A caveat that belongs with this result rather than at the end. On 5,183
 documents, Vespa's graph at `targetHits` 50 plus `exploreAdditionalHits` 40 is
-effectively exact: `graph_raw` equals `exact_raw` to four decimals at every one of
-the eleven fractions. The dual-field numbers therefore show what reserved
+effectively exact: `graph_raw` equals `exact_raw` to four decimals at ten of the
+eleven fractions, and at the eleventh (0% migrated) the graph is marginally
+*higher*, 0.5929 against 0.5900. The dual-field numbers therefore show what reserved
 candidate budgets do when the graph itself is barely lossy. On an index large
 enough for ANN to lose real recall, the dual-field arrangement should still
 reserve the old space a budget, but how much of the recovery survives is not
@@ -445,36 +521,57 @@ too, at the cost of a larger result set to rank.
 - Per-space normalization recovers the low point on a graph when the two spaces
   sit in separate fields, and does not when one field holds both, at matched,
   halved and doubled candidate budgets.
+- What does the work is the second field, not the second operator. Two operators
+  over one mixed field return one candidate list rather than two, and recover
+  what one operator recovers.
 - A partial update to an HNSW-indexed tensor attribute does not rewrite the
   document store, on a measurement whose positive controls pass.
 
 ## Running the migration
 
+First, the Python dependencies. The root `requirements.txt` covers both halves of
+the repo, and `prepare_embeddings.py` needs `datasets` and
+`sentence-transformers` from it:
+
 ```bash
+python3 -m venv venv && source venv/bin/activate
+pip install -r ../requirements.txt
+```
+
+Then the runs, in this order. Every line is here, resets included, so the block
+can be pasted top to bottom:
+
+```bash
+export VESPA_ENDPOINT=http://127.0.0.1:8090
+R="NO_RECORD=1 python3 scripts/feed_old_space.py"         # the reset, used below
+
 python3 scripts/prepare_embeddings.py                     # embeds once, ~1 min, shares ../scripts cache
-REPEATS=3 python3 scripts/feed_old_space.py                # step 3, the pre-migration index
-python3 scripts/eval_recall.py --profile old --exact       # step 4, expect 0.7817
+REPEATS=3 python3 scripts/feed_old_space.py               # step 3, the pre-migration index
+python3 scripts/eval_recall.py --profile old --exact      # step 4, expect 0.7817
 python3 scripts/eval_recall.py --profile old --explore 40  # the graph at ~ef 50
 python3 scripts/backfill_and_measure.py                   # steps 5 and 6, the whole curve
 python3 scripts/update_cost.py                            # step 5b, what each write shape costs
 python3 scripts/field_memory.py                           # step 5c, per-field memory
 python3 scripts/switch_and_rollback.py                    # steps 7 and 8
-TARGET_HITS=50 python3 scripts/normalization.py           # step 9, the dual-field fix
-TARGET_HITS=50 python3 scripts/inplace_vs_dualfield.py    # step 9b, the control
 
-# and the budget-matched controls the comparison needs
-TARGET_HITS=25  OUT_TAG=_t25  python3 scripts/normalization.py
-TARGET_HITS=100 OUT_TAG=_t100 python3 scripts/inplace_vs_dualfield.py
+eval $R; TARGET_HITS=50  python3 scripts/normalization.py         # step 9, the dual-field fix
+eval $R; TARGET_HITS=25  OUT_TAG=_t25 python3 scripts/normalization.py    # matched total budget
+eval $R; TARGET_HITS=50  python3 scripts/inplace_vs_dualfield.py         # step 9b, one field
+eval $R; TARGET_HITS=100 OUT_TAG=_t100 python3 scripts/inplace_vs_dualfield.py
+eval $R; TARGET_HITS=50  python3 scripts/inplace_two_operators.py        # step 9c, the separator
+eval $R; TARGET_HITS=100 OUT_TAG=_t100 python3 scripts/inplace_two_operators.py
+eval $R                                                   # leave the index pre-migration
 ```
 
-Both default to all eleven fractions; `FRACTIONS=0,0.1,0.2,0.3` runs the shorter
-early-migration version. `OUT_TAG` suffixes the output file so a control run does
-not overwrite the main one.
+Skipping a reset is the one mistake that produces wrong numbers silently, on the
+repo's most contested result, which is why the resets are in the block rather
+than in prose below it. `NO_RECORD=1` keeps a reset from overwriting the recorded
+load throughput. `inplace_vs_dualfield.py` and `inplace_two_operators.py`
+overwrite `emb_old` deliberately and restore it when they finish.
 
-Steps 9 and 9b both want a pre-migration index, so re-run `feed_old_space.py`
-before each, with `NO_RECORD=1` so a reset does not overwrite the recorded load
-throughput. `inplace_vs_dualfield.py` overwrites `emb_old` deliberately and
-restores it when it finishes.
+Steps 9 and 9b default to all eleven fractions and 9c to six;
+`FRACTIONS=0,0.1,0.2,0.3` runs any of them short. `OUT_TAG` suffixes the output
+file so a control run does not overwrite the main one.
 
 `switch_and_rollback.py` expects a fully migrated index, deploys a throwaway
 schema variant and restores the committed one, and puts the index back as it
@@ -520,9 +617,23 @@ the datasets library.
   Whether it performs a *read* is not measured; it is inferred, since a
   read-modify-write has to write.
 - The dual-field normalization result is measured against the in-place
-  alternative at matched, halved and doubled candidate budgets, and survives all
-  three. It is one seed, one index of 5,183 documents, and a graph that is
-  near-exact at this size. The direction should carry further than the
-  magnitudes.
+  alternative at matched, halved and doubled candidate budgets, and against a
+  one-field two-operator arrangement, and survives all of them. It is one seed,
+  one index of 5,183 documents, and a graph that is near-exact at this size. The
+  direction should carry further than the magnitudes.
+- Reach in every table here is measured by a standalone single-operator query,
+  which step 9c shows is an upper bound on what the mixed query actually scores.
+  The old-space share of the scored candidate list is the better quantity and is
+  reported beside it.
+- Reach is pooled in these runs (relevant found over relevant total) and a
+  per-query mean in `../scripts/stage3_hnsw_and_distant_pair.py`. Where the two
+  appear in one table the estimators differ, which is worth a few hundredths.
+- No query here writes while reading. Write catch-up, which the article's
+  strategy hierarchy turns on, is not measured anywhere in this repo.
+- There is no embedder component in the application package. The "model switch"
+  is a different query vector computed outside Vespa, so what is measured is the
+  rank-profile and target-field switch, not a two-embedder deployment.
+- The switch and rollback are exercised at 100% migrated on a quiescent index,
+  never mid-migration and never under concurrent writes.
 - Five seeds in the simulation, one seed here. The Vespa curve matches stage 3's
   seed 0 exactly, but a single order cannot show the spread the simulation reports.

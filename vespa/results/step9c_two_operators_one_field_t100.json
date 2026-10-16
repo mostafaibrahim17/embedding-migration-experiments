@@ -1,0 +1,88 @@
+{
+ "step": "9c",
+ "seed": 0,
+ "explore": 40,
+ "target_hits": 100,
+ "fractions": [
+  0.0,
+  0.1,
+  0.2,
+  0.3
+ ],
+ "endpoint": "http://127.0.0.1:8090",
+ "question": "two operators over ONE mixed field: does giving the old space its own operator and targetHits restore its reach, or does protection require a field that holds only old-space vectors?",
+ "compare_with": {
+  "two fields, two operators": "results/step9_normalization.json",
+  "one field, one operator": "results/step9b_inplace_vs_dualfield.json"
+ },
+ "runs": [
+  {
+   "fraction": 0.0,
+   "migrated_docs": 0,
+   "overwrite_seconds": 0.0,
+   "exact_raw": 0.59,
+   "exact_normalized": 0.59,
+   "graph_raw": 0.59,
+   "graph_normalized": 0.59,
+   "graph_reach_old_space_relevant": 0.8643,
+   "exact_reach_old_space_relevant": 0.8643,
+   "mixed_list_split": {
+    "mean_new_space_hits": 0.0,
+    "mean_old_space_hits": 100.0,
+    "mean_total_candidates": 100.0,
+    "target_hits_per_operator": 100
+   }
+  },
+  {
+   "fraction": 0.1,
+   "migrated_docs": 518,
+   "overwrite_seconds": 0.74,
+   "exact_raw": 0.3658,
+   "exact_normalized": 0.6047,
+   "graph_raw": 0.3658,
+   "graph_normalized": 0.5959,
+   "graph_reach_old_space_relevant": 0.8557,
+   "exact_reach_old_space_relevant": 0.859,
+   "mixed_list_split": {
+    "mean_new_space_hits": 62.61,
+    "mean_old_space_hits": 37.39,
+    "mean_total_candidates": 100.0,
+    "target_hits_per_operator": 100
+   }
+  },
+  {
+   "fraction": 0.2,
+   "migrated_docs": 1036,
+   "overwrite_seconds": 0.73,
+   "exact_raw": 0.3156,
+   "exact_normalized": 0.587,
+   "graph_raw": 0.3156,
+   "graph_normalized": 0.5516,
+   "graph_reach_old_space_relevant": 0.8659,
+   "exact_reach_old_space_relevant": 0.8659,
+   "mixed_list_split": {
+    "mean_new_space_hits": 82.01,
+    "mean_old_space_hits": 17.99,
+    "mean_total_candidates": 100.0,
+    "target_hits_per_operator": 100
+   }
+  },
+  {
+   "fraction": 0.3,
+   "migrated_docs": 1554,
+   "overwrite_seconds": 0.83,
+   "exact_raw": 0.3481,
+   "exact_normalized": 0.5959,
+   "graph_raw": 0.3451,
+   "graph_normalized": 0.531,
+   "graph_reach_old_space_relevant": 0.8912,
+   "exact_reach_old_space_relevant": 0.8912,
+   "mixed_list_split": {
+    "mean_new_space_hits": 89.15,
+    "mean_old_space_hits": 10.85,
+    "mean_total_candidates": 100.0,
+    "target_hits_per_operator": 100
+   }
+  }
+ ]
+}

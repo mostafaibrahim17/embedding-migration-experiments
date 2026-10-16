@@ -135,12 +135,20 @@ def reach(mask, target=None):
     """Share of each query's relevant OLD-space documents that the old-space
     operator returns in its own candidate list.
 
-    This is the quantity that decides whether rescoring can help: normalization
-    can only promote a document that came back. It is measured on the old-space
-    operator alone, with the same targetHits budget it gets inside the mixed
-    query, because that is the budget it actually has. targetHits, not hits, is
-    what widens an ANN candidate list; asking for more hits than targetHits
-    returns fewer results, not a wider search.
+    Measured on the old-space operator ALONE, which makes it an upper bound
+    rather than what the mixed query sees. inplace_two_operators.py reports
+    reach 0.804 while recovering only 0.4838, because those documents are
+    reachable by that operator on its own and still never make the combined
+    query's candidate list. Read space_split for the quantity that predicts
+    recovery, and read this as reachability in principle.
+
+    Pooled over queries (relevant found / relevant total), to match the recall
+    definition. ../../scripts/stage3_hnsw_and_distant_pair.py computes its reach
+    as a per-query mean instead, so the two are not the same estimator and the
+    README says so where they appear side by side.
+
+    targetHits, not hits, is what widens an ANN candidate list; asking for more
+    hits than targetHits returns fewer results, not a wider search.
     """
     target = target or TARGET
     yql = ("select doc_id from scifact where "
@@ -159,8 +167,17 @@ def reach(mask, target=None):
 
 def space_split(mask):
     """How a mixed candidate list divides between the two spaces, averaged over
-    queries. Each operator has its own targetHits budget, so the new space cannot
-    crowd the old one out of retrieval however much better it scores."""
+    queries, and how long it is in total.
+
+    This is the quantity that predicts whether normalization can recover, more
+    reliably than reach below. Note what it shows about budgets: the old-space
+    count comes out as targetHits * (1 - migrated), because the emb_old graph
+    holds a vector for every document and the migrated ones are then dropped by
+    `and space = 0`. Vespa post-filters here, so migrated documents do spend the
+    old-space operator's budget. Nothing is reserved. What two fields buy is two
+    graphs and therefore two candidate lists; inplace_two_operators.py separates
+    that from the operator count.
+    """
     yql = V.yql_mixed(target_hits=TARGET, explore=EXPLORE)
     new_n = old_n = lists = 0
     for i in range(len(q_ids)):
