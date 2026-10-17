@@ -1,5 +1,18 @@
 # The same migration, in Vespa
 
+[![Vespa 8.763.13](https://img.shields.io/badge/Vespa-8.763.13-005bbb.svg)](https://vespa.ai/)
+[![Runs in Docker](https://img.shields.io/badge/Runs%20in-Docker-2496ed.svg)](#running-it)
+[![Raw results: committed](https://img.shields.io/badge/Raw%20results-committed-15803d.svg)](results/)
+
+> The simulation in `../scripts/` could be wrong in ways that matter, so the same
+> migration runs here in a real engine. Vespa's exact search reproduces the numpy
+> baseline at **0.7817**, and the whole curve then matches at all eleven fractions.
+
+**Jump to:** [the schema](#what-the-schema-does) · [running it](#running-it) ·
+[results](#results-so-far) · [what is verified](#what-is-verified-so-far) ·
+[running the migration](#running-the-migration) ·
+[what is **not** verified](#what-is-not-verified)
+
 The runs in `../scripts/` simulate a mixed-space index with numpy and hnswlib.
 This directory does it in a real engine: one index carrying two embedding fields,
 a backfill that fills the second one a slice at a time, a coordinated switch of

@@ -1,11 +1,26 @@
 # What happens to recall while you migrate embedding models
 
-Code and raw results for the experiments behind the article *Half-migrating your
-embeddings is worse than either end*.
+[![License: MIT](https://img.shields.io/badge/License-MIT-0d9488.svg)](LICENSE)
+[![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-3776ab.svg)](requirements.txt)
+[![Vespa 8.763.13](https://img.shields.io/badge/Vespa-8.763.13-005bbb.svg)](vespa/)
+[![Datasets: BeIR](https://img.shields.io/badge/Datasets-SciFact%20%7C%20FiQA-ff9d00.svg)](https://github.com/beir-cellar/beir)
+[![Raw results: committed](https://img.shields.io/badge/Raw%20results-committed-15803d.svg)](results/)
 
-The question: when you move a vector index from one embedding model to another a
-slice at a time, what does recall do on the way? The expected answer is a dip that
-recovers as documents convert. It is not what these runs show.
+> Migrate a vector index to a new embedding model a slice at a time and recall does
+> not dip and recover. It falls **below both the index you started from and the one
+> you finish with**, worst at about a fifth migrated.
+
+Code and raw results for the experiments behind the article *Half-migrating your
+embeddings is worse than either end*. Every number in that article is produced by a
+script in here and recorded in `results/` or `vespa/results/`, per seed rather than
+summarised, so any figure it quotes can be recomputed rather than taken on trust.
+
+![The same index at three points in the migration: recall 0.59 before anything moves, 0.33 at a fifth migrated, 0.65 when finished](docs/migration-window.png)
+
+**Jump to:** [the finding](#the-finding) · [layout](#layout) · [setup](#setup) ·
+[running it](#running) · [evaluation settings](#setup-used) ·
+[reading the results](#reading-the-results) · [caveats](#caveats) ·
+[the Vespa half](vespa/)
 
 ## The finding
 
@@ -26,6 +41,13 @@ Mean of five random migration orders. Before anything moved, old queries against
 documents scored 0.78. The five seeds bottomed at 0.307–0.369, at 10% migrated once,
 20% three times and 30% once, so the depth varies but every order dipped below both
 ends.
+
+![Similarity to a new-model query. The two groups overlap, and migrated documents take four of the five places above the top-10 cutoff](docs/score-separation.png)
+
+Against a new-model query, migrated documents score higher on average, 0.146 against
+0.081, so they take most of the top-10 slots: 84% at 10% migrated and 92% at 20%. The
+two distributions overlap heavily, though, and 24.6% of old-space scores still beat
+the median migrated one, so this is crowding out rather than a clean separation.
 
 Two further results:
 
