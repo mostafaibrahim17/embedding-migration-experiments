@@ -139,6 +139,6 @@ res = {"stage": 8, "fraction": FRACTION, "candidates": CANDIDATES, "seeds": SEED
                "protocol difference is worth about 0.10, which is why the simulation "
                "reports 0.38 for the single-field case and Vespa reports 0.48. The "
                "whole-space statistics are not an expensive oracle: a few hundred sampled "
-               "documents per space land within 0.001 of using every one."}
+               "documents per space land within 0.002 of using every one."}
 json.dump(res, open(OUT, "w"), indent=1)
 print(f"\nsaved {OUT}")

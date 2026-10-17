@@ -26,5 +26,5 @@
   "512": 0.5988200589970502,
   "1024": 0.5982300884955752
  },
- "note": "stage 3 normalizes the candidates it returned; the Vespa rank profile is given statistics over each whole space. At a fixed candidate budget that protocol difference is worth about 0.10, which is why the simulation reports 0.38 for the single-field case and Vespa reports 0.48. The whole-space statistics are not an expensive oracle: a few hundred sampled documents per space land within 0.001 of using every one."
+ "note": "stage 3 normalizes the candidates it returned; the Vespa rank profile is given statistics over each whole space. At a fixed candidate budget that protocol difference is worth about 0.10, which is why the simulation reports 0.38 for the single-field case and Vespa reports 0.48. The whole-space statistics are not an expensive oracle: a few hundred sampled documents per space land within 0.002 of using every one."
 }
