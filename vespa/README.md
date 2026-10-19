@@ -9,7 +9,7 @@
 > baseline at **0.7817**, and the whole curve then matches at all eleven fractions.
 
 **Jump to:** [the schema](#what-the-schema-does) · [running it](#running-it) ·
-[results](#results-so-far) · [what is verified](#what-is-verified-so-far) ·
+[results](#results) · [what is verified](#what-is-verified) ·
 [running the migration](#running-the-migration) ·
 [what is **not** verified](#what-is-not-verified)
 
@@ -61,7 +61,8 @@ rank expression makes it explicit rather than accidental.
 
 Because the switch is a choice of rank profile and both profiles are deployed
 from the start, moving the whole index from the old space to the new one is a
-query parameter rather than a redeploy. The run will measure whether that holds.
+query parameter rather than a redeploy. Step 7 below measures that: 3.0 ms to the
+new space, 2.7 ms back, no deploys and no restarts.
 
 ## Running it
 
@@ -95,7 +96,7 @@ One symptom of moving it: `vespa deploy --wait` probes the query port directly o
 8080 and will report an unhealthy container even though the deployment succeeded.
 Check `curl http://127.0.0.1:8090/status.html` instead.
 
-## Results so far
+## Results
 
 **Step 3, the initial load.** All 5,183 documents with `emb_old` only and
 `space=0`, through the Vespa CLI feed client: 52 MB of JSONL, zero errors, and
@@ -523,7 +524,7 @@ that way — but it does not validate YQL annotations, so a misspelled one tunes
 nothing and reports no error. Raising `targetHits` to 100 reaches exact recall
 too, at the cost of a larger result set to rank.
 
-## What is verified so far
+## What is verified
 
 - The schema deploys: two HNSW-indexed tensor fields on one document type,
   `prenormalized-angular`, `attribute: fast-search`, and `closeness(label, ...)`

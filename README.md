@@ -72,7 +72,7 @@ Two further results:
 ## Layout
 
 ```
-scripts/     the five runs
+scripts/     the six runs
 results/     raw JSON written by each run
 ```
 
@@ -112,6 +112,7 @@ python scripts/stage3_hnsw_and_distant_pair.py   # first run embeds 5,183 docs x
 python scripts/stage2_cosine_separation.py       # ~1 min once cached
 python scripts/stage5_queries_last.py            # ~2 min once cached
 python scripts/stage7_ef_search.py               # ~2 min once cached
+python scripts/stage8_normalization_statistics.py  # ~1 min once cached
 python scripts/stage6_fiqa.py                    # 57,638 docs x3 models, 30-90 min
 ```
 

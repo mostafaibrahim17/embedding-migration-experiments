@@ -7,3 +7,6 @@ __pycache__/
 vespa/_sample/
 vespa/scripts/ids.json
 vespa/scripts/*.jsonl
+
+# scripts write their JSON next to themselves; results/ holds the committed copies
+scripts/*.json
