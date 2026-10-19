@@ -36,6 +36,18 @@ FRACTION = 0.2            # the low point
 CANDIDATES = 50           # stage 3's ef_search 50
 SAMPLES = [32, 64, 128, 256, 512, 1024]
 
+if not os.path.exists(IDS):
+    raise SystemExit(
+        f"missing {IDS}.\n"
+        "This stage reuses the document and query ordering the Vespa half writes, so run\n"
+        "  python3 vespa/scripts/prepare_embeddings.py\n"
+        "once first. It needs the datasets and sentence-transformers packages from\n"
+        "requirements.txt, and writes vespa/scripts/ids.json, which is gitignored.")
+for _tag in ("emb_docs_old", "emb_docs_new", "emb_q_new"):
+    if not os.path.exists(os.path.join(CACHE, _tag + ".npy")):
+        raise SystemExit(f"missing {_tag}.npy in {CACHE}. Run "
+                         "stage3_hnsw_and_distant_pair.py first (same EMB_CACHE).")
+
 meta = json.load(open(IDS))
 doc_ids, q_ids, relevant = meta["doc_ids"], meta["q_ids"], meta["relevant"]
 docs_old = np.load(os.path.join(CACHE, "emb_docs_old.npy"))

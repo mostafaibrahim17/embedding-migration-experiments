@@ -18,11 +18,11 @@ This directory does it in a real engine: one index carrying two embedding fields
 a backfill that fills the second one a slice at a time, a coordinated switch of
 query model and target field, and a rollback.
 
-Status: all of it runs. The baseline reproduces the numpy one exactly, the
-backfill reproduces the article's low point at every migration fraction, the
-switch and rollback are measured, and per-space normalization runs as a rank
-expression — where it turns out to behave differently from the simulation, for a
-reason worth the article's attention.
+The baseline reproduces the numpy one exactly, the backfill reproduces the
+article's low point at every migration fraction, the switch and rollback are
+measured, and per-space normalization runs as a rank expression. That last one
+behaves differently here from the simulation, and step 9 works out why: what
+protects the old space is a second embedding field, not the normalization.
 
 ## What the schema does
 
@@ -96,6 +96,10 @@ One symptom of moving it: `vespa deploy --wait` probes the query port directly o
 8080 and will report an unhealthy container even though the deployment succeeded.
 Check `curl http://127.0.0.1:8090/status.html` instead.
 
+To reproduce the results rather than browse them, skip ahead to
+[Running the migration](#running-the-migration), which lists every command in
+order, resets included.
+
 ## Results
 
 **Step 3, the initial load.** All 5,183 documents with `emb_old` only and
@@ -110,7 +114,8 @@ a backfill of the same index writes the same number of documents again.
 An earlier version of this file quoted 6.5 seconds and 794 documents/second here,
 and `backfill_and_measure.py` carried the same pair hardcoded, while the committed
 JSON held a figure from a later run. Nothing reads a throughput from a literal any
-more; step 5 reads step 3's output.
+more; step 5 reads step 3's output. The run order starts at step 3 because steps 1
+and 2 are the deploy and the smoke test above.
 
 **Step 4, the pre-migration baseline.** Old-model queries against `emb_old`,
 pooled recall@10 over the same 300 queries and 339 relevance judgements as the
@@ -197,8 +202,8 @@ interval, so two reads a few seconds apart return the same snapshot. Measured
 that way, `put_full` — 5,183 full document PUTs, 52 MB of payload, a write that
 cannot possibly leave the store untouched — reported **42550910 bytes before and
 42550910 bytes after, byte-identical**. An instrument that cannot see that write
-cannot be trusted to prove the absence of one, and the earlier table above was
-read off it.
+cannot be trusted to prove the absence of one. An earlier version of the table
+above was read off it, and reported every shape as touching nothing.
 
 The store is now measured directly. Proton keeps the document store as an
 append-only log under `0.ready/summary`, so a write that touches it makes those
@@ -277,8 +282,9 @@ A tensor attribute can be unset with a partial update: `{"emb_old": {"assign":
 null}}` returns 200 and the field really is gone, confirmed by reading the
 document back rather than by trusting the status code. (`{"remove": 0}` is a 400:
 *Expected start of JSON object, got VALUE_NUMBER_INT*.) No document rewrite is
-needed, so reclaiming 8.8 MB per million-ish vectors takes six seconds and one
-feed.
+needed, so reclaiming the 8.8 MB `emb_old` holds for these 5,183 vectors takes
+six seconds and one feed. The feed is the cost, not a rewrite, so it scales with
+the number of documents rather than with the size of what you are dropping.
 
 Which is the trap. Dropping the old space is fast, cheap and reversible-looking,
 and the moment it is done the old profile returns nothing at all — not degraded
@@ -293,9 +299,27 @@ threshold has been met on live traffic, not after the backfill finishes.
 
 **Step 9, normalization as a rank expression, and the result that changes the
 story.** The simulation repairs the low point by z-scoring each space separately,
-and finds this works in exact search but mostly fails on a graph, because
-rescoring cannot promote a document the graph never returned. Running the same
-fix in Vespa reproduces the first half and contradicts the second.
+and finds this works in exact search but mostly fails once retrieval runs through
+a fixed-size candidate list. Vespa reproduces that result and overturns the
+*explanation* the simulation gave for it.
+
+**What this section establishes, before the evidence for it.** Per-space
+normalization recovers the low point completely when the two spaces sit in
+separate fields (0.3156 to 0.5870, equal to exact search) and only partly when
+one field holds both (0.4808). What does the work is the second **field**, not
+the second operator and not a wider candidate list: two fields are two HNSW
+graphs and therefore two candidate lists, 90 documents against 50, and the
+old-space list is ranked on old-space vectors alone, so migrated documents can
+dilute it but cannot outscore their way into it. Two operators over one mixed
+field return one list, not two, and recover what one operator recovers. Nothing
+is reserved either — Vespa post-filters `and space = 0`, so the old-space
+operator's returned count is `targetHits x (1 - migrated)` at every fraction.
+
+Three explanations were published here before that one and each was wrong. They
+are kept below, with the measurement that killed each, because the controls are
+the point and because a reader checking this repo against the article deserves
+to see which claims moved. If you only want the current state, the tables in
+"So is it the second field or the second operator?" are it.
 
 A first-phase expression sees one document at a time and cannot know the
 distribution it belongs to, so the per-space mean and standard deviation are
@@ -327,12 +351,14 @@ one written here first; see "Nothing is reserved" below
 |---|---|---|---|---|---|---|---|---|---|---|
 | two fields, reach | 0.811 | 0.803 | 0.801 | 0.824 | 0.863 | 0.861 | 0.891 | 0.908 | 0.914 | 0.971 |
 | one field in place, reach | 0.811 | 0.587 | 0.442 | 0.393 | 0.356 | 0.347 | 0.348 | 0.347 | 0.343 | 0.229 |
-| stage 3 hnswlib in place, reach | 0.794 | 0.527 | 0.399 | 0.353 | — | — | — | — | — | — |
+| stage 3 hnswlib in place, reach, seed 0 | 0.794 | 0.527 | 0.399 | 0.353 | — | — | — | — | — | — |
 
 Overwriting the single field in place puts both spaces back in one graph and the
 failure returns, exactly as the simulation has it: reach collapses to 0.442 at
-20% migrated and normalization recovers only 0.4808 of the 0.5811 exact search
-reaches. That run is `inplace_vs_dualfield.py`.
+20% migrated and normalization recovers only 0.4808 of the 0.5811 that exact
+search reaches *into the same 50-document list*. (The 0.5870 above is exact
+search over every document in two fields; these are different ceilings, and the
+budget tables below separate them.) That run is `inplace_vs_dualfield.py`.
 
 ### It is not the graph, and that took a second measurement to establish
 
@@ -357,7 +383,8 @@ picture:
 
 At 20% migrated a perfect search into a 50-document candidate list still reaches
 only 0.475 of the relevant old-space documents, against the graph's 0.442. Reach
-starts at 0.805 before anything migrates, so of the 0.363 it loses by 20%
+starts at 0.805 before anything migrates — the exact-search figure, against the
+graph's 0.811 in the table above — so of the 0.363 it loses by 20%
 migrated, score competition accounts for 0.331 and the graph for 0.033, nine
 tenths against one tenth.
 
@@ -389,7 +416,7 @@ migrated:
 | two fields | 50 per operator | 90.0 | 0.5870 | 0.801 |
 | one field in place | 50 | 50.0 | 0.4808 | 0.442 |
 | one field in place | 100 | 100.0 | 0.5516 | 0.594 |
-| exact search, two fields | — | all 5,183 | 0.5870 | — |
+| two fields, `approximate:false` | 50 per operator | 90.0, brute forced | 0.5870 | — |
 
 The confound was real and the effect survives it. Give the in-place graph twice
 the candidates the dual-field query gets and it still recovers less, 0.5516
@@ -420,6 +447,14 @@ document including the migrated ones, and then loses the migrated ones to the
 `and space = 0` filter. Vespa is post-filtering here, so migrated documents *do*
 spend that operator's budget, in exact proportion to their share. Nothing is
 reserved and the budget is not fixed.
+
+That is worth a note, because Vespa's documented default for a filtered
+`nearestNeighbor` is to integrate the filter into the graph search, which would
+return a full `targetHits` of old-space documents at every fraction. The
+`50 x (1 - migrated)` line above is the measurement, not an assumption; the
+likely cause is that the two operators sit under an `or`, so `space = 0` is not
+pushed into the traversal of a single operator. This repo measures the behaviour
+and does not establish the cause.
 
 ### So is it the second field or the second operator? (step 9c)
 
@@ -485,18 +520,13 @@ list at all while the index is mixed.
 
 One practitioner note from getting this wrong first. With `targetHits` equal to
 the number of hits returned, normalization changed nothing whatsoever in the
-in-place case, 0.3068 before and after, because rescoring ten candidates to
+in-place case, before and after, because rescoring ten candidates to
 return ten documents cannot alter the set. Rescoring needs a candidate list
 wider than the result, and how much wider is the whole lever. `TARGET_HITS` and
-`FRACTIONS` reproduce any of the settings above:
-
-```bash
-TARGET_HITS=50  python3 normalization.py            # two fields, the main run
-TARGET_HITS=25  OUT_TAG=_t25  python3 normalization.py    # matched total budget
-TARGET_HITS=50  python3 inplace_vs_dualfield.py     # one field, same per operator
-TARGET_HITS=100 OUT_TAG=_t100 python3 inplace_vs_dualfield.py   # matched total
-TARGET_HITS=50  python3 inplace_two_operators.py    # one field, two operators
-```
+`FRACTIONS` reproduce any of the settings above. Run them from
+[Running the migration](#running-the-migration) rather than on their own: each
+one needs the index reset first, and skipping that produces wrong numbers
+silently on exactly these results.
 
 A caveat that belongs with this result rather than at the end. On 5,183
 documents, Vespa's graph at `targetHits` 50 plus `exploreAdditionalHits` 40 is
@@ -601,8 +631,9 @@ leaves it in, so re-run that first to start over. `SEED` picks the migration
 order and defaults to 0, matching stage 3's first seed. `update_cost.py` rewrites
 every document several times and leaves the index fully migrated, so run it after
 the backfill, not before. It also needs `docker exec` into the container to size
-the document store files, so `VESPA_CONTAINER` and `VESPA_STORE` are there for a
-deployment that is not the Docker one in this README.
+the document store files, as does `field_memory.py` to read the per-field metrics,
+so `VESPA_CONTAINER` and `VESPA_STORE` are there for a deployment that is not the
+Docker one in this README.
 
 `prepare_embeddings.py` writes the four embedding arrays into `../scripts/` under
 the names stage 3 uses, so the two halves of the repo share one cache and one

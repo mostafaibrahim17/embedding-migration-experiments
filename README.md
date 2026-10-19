@@ -55,9 +55,7 @@ Two further results:
   runs through a fixed-size candidate list.** Exact search over every document
   recovers 0.33 to 0.60. On an HNSW graph updated in place, the same fix only reaches
   0.38, because by 20% migrated the graph returns just 40% of each query's relevant
-  old-space documents, down from 79%, a figure that is a per-query mean here and
-  pooled in the Vespa runs, so the two sit within a few hundredths of each other
-  rather than being the same estimator. Normalization can only reorder what came back.
+  old-space documents, down from 79%. Normalization can only reorder what came back.
   Rebuilding the graph on the mix instead gives 0.39 and 42%, so the protocol barely
   matters. Widening the search fourfold (ef_search 200) lifts it to 0.48 and reach to
   75%, against a 91% baseline at that width, still short. The approximate graph is
@@ -102,8 +100,9 @@ toolchain. On a bare container, install build tools first.
 ## Running
 
 Run stage 3 first. It embeds the documents and caches them as `emb_*.npy` next to the
-scripts. That cache is gitignored, so a clean checkout embeds all of it, including the
-distant-pair array the Vespa half's `prepare_embeddings.py` does not write. Stages 5 and 7 need that cache and stop with a clear message if it is missing;
+scripts. That cache is gitignored, so a clean checkout embeds all of it, including
+the distant-pair array the Vespa half's `prepare_embeddings.py` does not write.
+Stages 5, 7 and 8 need that cache and stop with a clear message if it is missing;
 stage 2 re-embeds on its own if it has to, which costs a few minutes. Set
 `EMB_CACHE=/some/path` to keep the cache elsewhere.
 
@@ -112,9 +111,16 @@ python scripts/stage3_hnsw_and_distant_pair.py   # first run embeds 5,183 docs x
 python scripts/stage2_cosine_separation.py       # ~1 min once cached
 python scripts/stage5_queries_last.py            # ~2 min once cached
 python scripts/stage7_ef_search.py               # ~2 min once cached
-python scripts/stage8_normalization_statistics.py  # ~1 min once cached
 python scripts/stage6_fiqa.py                    # 57,638 docs x3 models, 30-90 min
+
+python3 vespa/scripts/prepare_embeddings.py      # writes vespa/scripts/ids.json
+python scripts/stage8_normalization_statistics.py  # ~1 min; needs that ids.json
 ```
+
+Stage 8 is last because it reuses the document and query ordering the Vespa half
+writes, and `vespa/scripts/ids.json` is gitignored, so a clean checkout has to
+run `prepare_embeddings.py` once before it. All three stages that depend on
+something upstream say so and exit with a message rather than a traceback.
 
 Paths are relative to each script, not to your shell, so it does not matter which
 directory you run from. Every script writes its JSON into `scripts/`. The copies in
@@ -199,12 +205,17 @@ Where the rest of the article's figures live:
   3072-dimensional pair behaves the same way.
 - Five seeds on 300 SciFact queries and 648 FiQA queries. The spread is reported above
   but there are no confidence intervals, and the per-seed depth varies by 0.06.
+- Reach, the share of a query's relevant old-space documents that came back, is a
+  per-query mean in these scripts and pooled in the Vespa runs. The two sit within a
+  few hundredths of each other and are not the same estimator, so do not read a small
+  difference between the halves as a result.
 - Per-space normalization needs a model tag on every vector, a rescoring pass, and
   knowing which space each document is in. It was described here as an oracle fix,
   on the grounds that its statistics come from every document. Stage 8 shows that
   part is wrong: the statistics are two numbers per space, and 256 sampled documents
-  per space land within 0.002 of using all of them (0.5947 against 0.5965). What the
-  fix cannot do is cheap is recover a document the candidate list never held.
+  per space land within 0.002 of using all of them (0.5947 against 0.5965). What stays
+  expensive is recovering a document the candidate list never held, which is the
+  actual finding.
 - The two halves of this repo do not normalize identically, and the difference is
   worth about 0.10. stage 3 scores a candidate list and can only take each space's
   mean and standard deviation from the candidates it returned; the Vespa rank profile
